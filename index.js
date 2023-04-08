@@ -16,28 +16,15 @@ app.use(express.json());
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.wtm3mfw.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
-
-
-async function run() {
-  try {
-
-    // collection 1 
-    const usersCollection = client.db('users').collection('usersCollection');
-    const applyDataCollection = client.db('appliedUserDetails').collection('usersApplyDataCollection');
-    const couponCollection = client.db('appliedUserDetails').collection('couponCollection');
-    const refereeCollection = client.db('appliedUserDetails').collection('refereeCollection');
-
 async function run() {
   try {
     // collection 1
     const usersCollection = client.db("users").collection("usersCollection");
-    const applyDataCollection = client
-      .db("appliedUserDetails")
-      .collection("usersApplyDataCollection");
+    const applyDataCollection = client.db("appliedUserDetails").collection("usersApplyDataCollection");
+    const couponCollection = client.db('appliedUserDetails').collection('couponCollection');
+    const refereeCollection = client.db('appliedUserDetails').collection('refereeCollection');
     const csvBulkData = client.db("questionsBank").collection("csvBulkData");
-    const assesmentData = client
-      .db("questionsBank")
-      .collection("assesmentData");
+    const assesmentData = client.db("questionsBank").collection("assesmentData");
 
     // user(buyer and seller) data save------------
     app.put("/users", async (req, res) => {
@@ -301,14 +288,37 @@ async function run() {
     })
 
 
-  }
-  finally {
-
+    app.post("/add-csv-data", async (req, res) => {
+      const data = req.body;
+      // console.log("data: ", data);
+      const result = await csvBulkData.insertMany(data);
+      res.send(result);
+      console.log("result: ", result);
+    });
+    app.get("/get-questions", async (req, res) => {
+      const searchParameteresForQueriesString =
+        req.headers.searchparameteresforqueries;
+      const searchParameteresForQueries = JSON.parse(
+        searchParameteresForQueriesString
+      );
+      // console.log("searchParameteresForQueries: ", searchParameteresForQueries);
+      const { topicName, questionName, difficultyLevel } =
+        searchParameteresForQueries;
+      let query = {};
+      if (topicName) query.topicName = topicName;
+      if (questionName) query.questionName = questionName;
+      if (difficultyLevel) query.difficultyLevel = difficultyLevel;
+      console.log("query: ", query);
+      if (!Object.keys(query).length) {
+        console.log("xxxxxxxxxxxxxxxxx");
+        return res.send([]);
+      }
+  
       // const query = { runtime: { $lt: 15 } };
       // const options = {
       //   // sort returned documents in ascending order by title (A->Z)
       //   sort: { title: 1 },
-      //   // Include only the `title` and `imdb` fields in each returned document
+      //   // Include only the title and imdb fields in each returned document
       //   projection: { _id: 0, title: 1, imdb: 1 },
       // };
       const result = await csvBulkData.find(query).toArray();
@@ -321,7 +331,10 @@ async function run() {
       // console.log("result: ", result);
       res.send(result);
     });
+
+
   } finally {
+
   }
 }
 run().catch(err => console.error(err));
