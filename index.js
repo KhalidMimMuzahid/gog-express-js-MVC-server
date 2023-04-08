@@ -109,8 +109,8 @@ async function run() {
             date: userinfo.date,
             course: userinfo.course,
             refelInput: userinfo.refelInput,
-            gander:userinfo.gander
-           
+            gander: userinfo.gander
+
           }
         }
         console.log(updateId);
@@ -132,6 +132,26 @@ async function run() {
           error: error.message,
         })
 
+      }
+    })
+
+    // admin
+    app.get('/admin/:email', async (req, res) => {
+      try {
+        const email = req.params.email;
+      
+        const query = { email };
+  
+        const users = await usersCollection.find(query).toArray()
+       
+        console.log(users);
+        res.send(users);
+
+      } catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        })
       }
     })
 
@@ -246,7 +266,7 @@ async function run() {
     })
 
     // delete addProduct id
-    app.delete('/referee/:id',  async (req, res) => {
+    app.delete('/referee/:id', async (req, res) => {
       try {
         const id = req.params.id;
         const filter = { _id: new ObjectId(id) }
@@ -266,7 +286,7 @@ async function run() {
     })
 
     // delete coupon id
-    app.delete('/coupon/:id',  async (req, res) => {
+    app.delete('/coupon/:id', async (req, res) => {
       try {
         const id = req.params.id;
         const filter = { _id: new ObjectId(id) }
