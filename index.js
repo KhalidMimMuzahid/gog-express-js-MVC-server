@@ -27,7 +27,7 @@ async function run() {
     const assesmentData = client.db("questionsBank").collection("assesmentData");
     const programPriceData = client.db("programPrices").collection("programPricesCollection");
 
-    
+
 
     // user(buyer and seller) data save------------
     app.put("/users", async (req, res) => {
@@ -112,11 +112,13 @@ async function run() {
             email: userinfo.email,
             phone: userinfo.phone,
             date: userinfo.date,
-            course: userinfo.course,
             refelInput: userinfo.refelInput,
             gander: userinfo.gander
 
-          }
+          },
+          $push:{
+            course: userinfo.course
+            }
         }
         console.log(updateId);
 
@@ -144,13 +146,13 @@ async function run() {
     app.get('/admin/:email', async (req, res) => {
       try {
         const email = req.params.email;
-      
+console.log(email);
         const query = { email };
-  
-        const users = await usersCollection.find(query).toArray()
-       
-        console.log(users);
-        res.send(users);
+        console.log(query);
+        const users = await usersCollection.findOne(query)
+        const role =  users?.roll === "admin"
+        console.log(role);
+        res.send(role);
 
       } catch (error) {
         res.send({
@@ -318,6 +320,7 @@ async function run() {
       res.send(result);
       console.log("result: ", result);
     });
+
     app.get("/get-questions", async (req, res) => {
       const searchParameteresForQueriesString =
         req.headers.searchparameteresforqueries;
@@ -336,7 +339,7 @@ async function run() {
         console.log("xxxxxxxxxxxxxxxxx");
         return res.send([]);
       }
-  
+
       // const query = { runtime: { $lt: 15 } };
       // const options = {
       //   // sort returned documents in ascending order by title (A->Z)
@@ -348,6 +351,7 @@ async function run() {
       // console.log("result: ", result);
       res.send(result);
     });
+
     app.post("/add-assesment", async (req, res) => {
       const assesment = req.body;
       const result = await assesmentData.insertOne(assesment);
@@ -359,6 +363,74 @@ async function run() {
     //   const data = await assesmentData.find(query).toArray();
     //   res.send(data);
     // });
+
+    // get coupon collection
+    app.get('/program', async (req, res) => {
+      try {
+        const query = {}
+
+        const result = await programPriceData.find(query).toArray()
+
+        res.send({
+          success: true,
+          data: result,
+          message: 'Successfully '
+        })
+      } catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        })
+      }
+    })
+
+    // get coupon collection
+
+    app.get('/program/:id', async (req, res) => {
+      try {
+        const id = req.params.id
+        const query = { _id: new ObjectId(id) }
+        const result = await programPriceData.findOne(query)
+        console.log(result);
+        res.send(result)
+
+      } catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        })
+      }
+    })
+
+    // put report
+    app.put('/newprice' , async (req, res) => {
+      try {
+
+        const program = req.body;
+        const id = program.id
+        const filter = { _id: new ObjectId(id) };
+        const option = { upsert: true };
+        const updateId = {
+          $set: {
+            price: program.coupon
+          }
+        }
+        const result = await programPriceData.updateOne(filter, updateId, option)
+        console.log(result);
+        res.send({
+          success: true,
+          data: result,
+          message: 'Successfully get data'
+
+        })
+      } catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        })
+
+      }
+    })
 
 
   } finally {
