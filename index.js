@@ -25,6 +25,9 @@ async function run() {
     const refereeCollection = client.db('appliedUserDetails').collection('refereeCollection');
     const csvBulkData = client.db("questionsBank").collection("csvBulkData");
     const assesmentData = client.db("questionsBank").collection("assesmentData");
+    const programPriceData = client.db("programPrices").collection("programPricesCollection");
+
+    
 
     // user(buyer and seller) data save------------
     app.put("/users", async (req, res) => {
