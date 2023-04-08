@@ -331,6 +331,11 @@ async function run() {
       // console.log("result: ", result);
       res.send(result);
     });
+    // app.get("/add-assesment", async (req, res) => {
+    //   const query = {};
+    //   const data = await assesmentData.find(query).toArray();
+    //   res.send(data);
+    // });
 
 
   } finally {
