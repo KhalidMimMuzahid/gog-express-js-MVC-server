@@ -33,8 +33,7 @@ async function run() {
     app.put("/users", async (req, res) => {
       const user = req.body;
       const email = user.email;
-      const phone = user.phone;
-      const filter = { $and: [{ email: email }, { phone: phone }] }
+      const filter = { email: email };
       const options = { upsert: true };    // verfiy the dupate data 
       const updateDoc = {
         $set: user,
