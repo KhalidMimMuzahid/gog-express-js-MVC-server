@@ -71,6 +71,19 @@ async function run() {
       const data = await usersCollection.find(query).toArray();
       res.send(data);
     });
+    // get users for the check mobile mumber
+    app.get("/checkuserindatabase", async (req, res) => {
+     const  numberString = req.headers.number
+     const  number = JSON.parse( numberString)
+     console.log(number);
+      const query = {phone: number};
+      const data = await usersCollection.findOne(query)
+      console.log("data: ",data)
+      const data2= {
+        user: data
+      }
+      res.send(data2);
+    });
 
 
 
