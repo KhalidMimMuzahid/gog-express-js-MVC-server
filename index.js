@@ -46,6 +46,36 @@ async function run() {
       res.send(result);
     });
 
+
+     // Update the user name 
+     app.put('/usersname', async (req, res) => {
+      try {
+        const userinfo = req.body
+        const email = req.body.email;
+        const filter = { email: email };
+        const option = { upsert: true };
+        const updateId = {
+          $set: {
+            name: userinfo.name,
+          }
+        }
+        console.log(updateId);
+        const result = await usersCollection.updateOne(filter, updateId, option)
+        console.log(result);
+        res.send({
+          success: true,
+          data: result,
+          message: 'Successfully '
+        })
+      } catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        })
+      }
+    })
+
+
     // user(buyer and seller) data save------------
     app.put("/apply-data", async (req, res) => {
       const applyData = req.body;
