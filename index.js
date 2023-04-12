@@ -33,8 +33,7 @@ async function run() {
     app.put("/users", async (req, res) => {
       const user = req.body;
       const email = user.email;
-      const phone = user.phone;
-      const filter = { $and: [{ email: email }, { phone: phone }] }
+      const filter = { email: email };
       const options = { upsert: true };    // verfiy the dupate data 
       const updateDoc = {
         $set: user,
@@ -46,6 +45,36 @@ async function run() {
       );
       res.send(result);
     });
+
+
+     // Update the user name // from sojib
+     app.put('/usersname', async (req, res) => {
+      try {
+        const userinfo = req.body
+        const email = req.body.email;
+        const filter = { email: email };
+        const option = { upsert: true };
+        const updateId = {
+          $set: {
+            name: userinfo.name,
+          }
+        }
+        console.log(updateId);
+        const result = await usersCollection.updateOne(filter, updateId, option)
+        console.log(result);
+        res.send({
+          success: true,
+          data: result,
+          message: 'Successfully '
+        })
+      } catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        })
+      }
+    })
+
 
     // user(buyer and seller) data save------------
     app.put("/apply-data", async (req, res) => {
@@ -71,6 +100,19 @@ async function run() {
       const query = {};
       const data = await usersCollection.find(query).toArray();
       res.send(data);
+    });
+    // get users for the check mobile mumber
+    app.get("/checkuserindatabase", async (req, res) => {
+     const  numberString = req.headers.number
+     const  number = JSON.parse( numberString)
+     console.log(number);
+      const query = {phone: number};
+      const data = await usersCollection.findOne(query)
+      console.log("data: ",data)
+      const data2= {
+        user: data
+      }
+      res.send(data2);
     });
 
 
