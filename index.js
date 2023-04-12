@@ -143,6 +143,28 @@ async function run() {
       }
     })
 
+    // get userData for phone verify -s 
+    app.get('/userinfoforphone/:email',  async (req, res) => {
+      try {
+        const email = req.params.email;
+        //console.log(email);
+        const query = { email };
+        console.log(query);
+        const users = await usersCollection.findOne(query)
+        //console.log(users);
+        if(users.phone){
+          res.send({status:200, message: "phone verified"});
+        }else{
+          res.send({status:404, message: "phone not verified"});
+        }        
+      } catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        })
+      }
+    })
+
     // single user
     app.get('/users/:id', async (req, res) => {
       try {
