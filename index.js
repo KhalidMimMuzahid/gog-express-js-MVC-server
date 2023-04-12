@@ -82,6 +82,25 @@ async function run() {
       res.send(data);
     })
 
+    // get admin admin user 
+    app.get('/userinfo/:email',  async (req, res) => {
+      try {
+        const email = req.params.email;
+        console.log(email);
+        const query = { email };
+
+        console.log(query);
+        const users = await usersCollection.findOne(query)
+        res.send(users);
+
+      } catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        })
+      }
+    })
+
     // single user
     app.get('/users/:id', async (req, res) => {
       try {
@@ -116,9 +135,9 @@ async function run() {
             gander: userinfo.gander
 
           },
-          $push:{
+          $push: {
             course: userinfo.course
-            }
+          }
         }
         console.log(updateId);
 
@@ -146,11 +165,11 @@ async function run() {
     app.get('/admin/:email', async (req, res) => {
       try {
         const email = req.params.email;
-console.log(email);
+        console.log(email);
         const query = { email };
         console.log(query);
         const users = await usersCollection.findOne(query)
-        const role =  users?.roll === "admin"
+        const role = users?.roll === "admin"
         console.log(role);
         res.send(role);
 
@@ -403,7 +422,7 @@ console.log(email);
     })
 
     // put report
-    app.put('/newprice' , async (req, res) => {
+    app.put('/newprice', async (req, res) => {
       try {
 
         const program = req.body;
