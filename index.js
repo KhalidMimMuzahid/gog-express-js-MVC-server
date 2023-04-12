@@ -47,7 +47,7 @@ async function run() {
     });
 
 
-     // Update the user name 
+     // Update the user name // from sojib
      app.put('/usersname', async (req, res) => {
       try {
         const userinfo = req.body
