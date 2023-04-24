@@ -22,6 +22,7 @@ async function run() {
     const usersCollection = client.db("users").collection("usersCollection");
     const applyDataCollection = client.db("appliedUserDetails").collection("usersApplyDataCollection");
     const couponCollection = client.db('appliedUserDetails').collection('couponCollection');
+    const chatBotUserMessageCollection = client.db('chatbotData').collection('chatBotUserMessageCollection');
     const refereeCollection = client.db('appliedUserDetails').collection('refereeCollection');
     const csvBulkData = client.db("questionsBank").collection("csvBulkData");
     const assesmentData = client.db("questionsBank").collection("assesmentData");
@@ -46,8 +47,7 @@ async function run() {
       res.send(result);
     });
 
-
-     // Update the user name // from sojib
+     // Update the user name 
      app.put('/usersname', async (req, res) => {
       try {
         const userinfo = req.body
@@ -95,6 +95,18 @@ async function run() {
       res.send(result);
     });
 
+    // set rhe s30 tah in users collection
+    app.put("/users-s30", async (req, res) => {
+      const users = req.body;
+      const email = users.email;
+      const filter = { email: email };
+      const data = await usersCollection.updateOne(filter, { $set: { tag: "s30" }});
+      res.send(data);
+    });
+
+
+
+    
     // get users
     app.get("/users", async (req, res) => {
       const query = {};
@@ -122,6 +134,25 @@ async function run() {
       const query = {};
       const data = await usersCollection.find(query).toArray();
       res.send(data);
+    })
+
+    // post messages for chatbot collection
+    app.post('/chat-bot-mesages', async (req, res) => {
+      try {
+        const usermessage = req.body;
+        console.log(usermessage);
+        const result = await chatBotUserMessageCollection.insertOne(usermessage);
+        res.send({
+          success: true,
+          data: result,
+          message: 'Successfully post '
+        })
+      } catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        })
+      }
     })
 
     // get admin admin user 
