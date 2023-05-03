@@ -14,18 +14,11 @@ app.use(cors());
 app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.wtm3mfw.mongodb.net/?retryWrites=true&w=majority`;
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
-
-
-
-async function run() {
-  try {
-
-    // collection 1 
-    const usersCollection = client.db('users').collection('usersCollection');
-    const applyDataCollection = client.db('appliedUserDetails').collection('usersApplyDataCollection');
-    const couponCollection = client.db('appliedUserDetails').collection('couponCollection');
-    const refereeCollection = client.db('appliedUserDetails').collection('refereeCollection');
+const client = new MongoClient(uri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverApi: ServerApiVersion.v1,
+});
 
 async function run() {
   try {
@@ -34,6 +27,12 @@ async function run() {
     const applyDataCollection = client
       .db("appliedUserDetails")
       .collection("usersApplyDataCollection");
+    const couponCollection = client
+      .db("appliedUserDetails")
+      .collection("couponCollection");
+    const refereeCollection = client
+      .db("appliedUserDetails")
+      .collection("refereeCollection");
     const csvBulkData = client.db("questionsBank").collection("csvBulkData");
     const assesmentData = client
       .db("questionsBank")
@@ -44,8 +43,8 @@ async function run() {
       const user = req.body;
       const email = user.email;
       const phone = user.phone;
-      const filter = { $and: [{ email: email }, { phone: phone }] }
-      const options = { upsert: true };    // verfiy the dupate data 
+      const filter = { $and: [{ email: email }, { phone: phone }] };
+      const options = { upsert: true }; // verfiy the dupate data
       const updateDoc = {
         $set: user,
       };
@@ -62,8 +61,8 @@ async function run() {
       const applyData = req.body;
       const email = applyData.email;
       const phone = applyData.phone;
-      const filter = { $or: [{ email: email }, { phone: phone }] }
-      const options = { upsert: true };    // verfiy the dupate data 
+      const filter = { $or: [{ email: email }, { phone: phone }] };
+      const options = { upsert: true }; // verfiy the dupate data
       //console.log(applyData);
       const updateDoc = {
         $set: applyData,
@@ -83,36 +82,33 @@ async function run() {
       res.send(data);
     });
 
-
-
-    // get users 
+    // get users
     app.get("/users", async (req, res) => {
       const query = {};
       const data = await usersCollection.find(query).toArray();
       res.send(data);
-    })
+    });
 
     // single user
-    app.get('/users/:id', async (req, res) => {
+    app.get("/users/:id", async (req, res) => {
       try {
-        const id = req.params.id
-        const query = { _id: new ObjectId(id) }
-        const result = await usersCollection.findOne(query)
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await usersCollection.findOne(query);
         console.log(result);
-        res.send(result)
-
+        res.send(result);
       } catch (error) {
         res.send({
           success: false,
           error: error.message,
-        })
+        });
       }
-    })
+    });
 
     // put user
-    app.put('/booking', async (req, res) => {
+    app.put("/booking", async (req, res) => {
       try {
-        const userinfo = req.body
+        const userinfo = req.body;
         const email = req.body.email;
         const filter = { email: email };
         const option = { upsert: true };
@@ -124,191 +120,209 @@ async function run() {
             date: userinfo.date,
             course: userinfo.course,
             refelInput: userinfo.refelInput,
-            gander:userinfo.gander
-           
-          }
-        }
+            gander: userinfo.gander,
+          },
+        };
         console.log(updateId);
 
-        const result = await usersCollection.updateOne(filter, updateId, option)
+        const result = await usersCollection.updateOne(
+          filter,
+          updateId,
+          option
+        );
 
         console.log(result);
-
 
         res.send({
           success: true,
           data: result,
-          message: 'Successfully '
-
-        })
+          message: "Successfully ",
+        });
       } catch (error) {
         res.send({
           success: false,
           error: error.message,
-        })
-
+        });
       }
-    })
+    });
 
     // post coupon collection
-    app.post('/coupon', async (req, res) => {
+    app.post("/coupon", async (req, res) => {
       try {
         const coupon = req.body;
         const result = await couponCollection.insertOne(coupon);
         res.send({
           success: true,
           data: result,
-          message: 'Successfully post '
-        })
+          message: "Successfully post ",
+        });
       } catch (error) {
         res.send({
           success: false,
           error: error.message,
-        })
+        });
       }
-    })
+    });
 
     // get coupon collection
-    app.get('/coupon', async (req, res) => {
+    app.get("/coupon", async (req, res) => {
       try {
-        const query = {}
+        const query = {};
 
-        const result = await couponCollection.find(query).toArray()
+        const result = await couponCollection.find(query).toArray();
 
         res.send({
           success: true,
           data: result,
-          message: 'Successfully '
-        })
+          message: "Successfully ",
+        });
       } catch (error) {
         res.send({
           success: false,
           error: error.message,
-        })
+        });
       }
-    })
+    });
 
     // single couponCollection
-    app.get('/coupon/:id', async (req, res) => {
+    app.get("/coupon/:id", async (req, res) => {
       try {
-        const id = req.params.id
-        const query = { _id: new ObjectId(id) }
-        const result = await couponCollection.findOne(query)
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await couponCollection.findOne(query);
         console.log(result);
-        res.send(result)
-
+        res.send(result);
       } catch (error) {
         res.send({
           success: false,
           error: error.message,
-        })
+        });
       }
-    })
+    });
 
     // post refereeCollection collection
-    app.post('/referee', async (req, res) => {
+    app.post("/referee", async (req, res) => {
       try {
         const coupon = req.body;
         const result = await refereeCollection.insertOne(coupon);
         res.send({
           success: true,
           data: result,
-          message: 'Successfully post data'
-        })
+          message: "Successfully post data",
+        });
       } catch (error) {
         res.send({
           success: false,
           error: error.message,
-        })
+        });
       }
-    })
+    });
 
     // get refereeCollection collection
-    app.get('/referee', async (req, res) => {
+    app.get("/referee", async (req, res) => {
       try {
-        const query = {}
+        const query = {};
 
-        const result = await refereeCollection.find(query).toArray()
+        const result = await refereeCollection.find(query).toArray();
 
         res.send({
           success: true,
           data: result,
-          message: 'Successfully'
-        })
+          message: "Successfully",
+        });
       } catch (error) {
         res.send({
           success: false,
           error: error.message,
-        })
+        });
       }
-    })
+    });
 
     // single refereeCollection
-    app.get('/referee/:id', async (req, res) => {
+    app.get("/referee/:id", async (req, res) => {
       try {
-        const id = req.params.id
-        const query = { _id: new ObjectId(id) }
-        const result = await refereeCollection.findOne(query)
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await refereeCollection.findOne(query);
         console.log(result);
-        res.send(result)
-
+        res.send(result);
       } catch (error) {
         res.send({
           success: false,
           error: error.message,
-        })
+        });
       }
-    })
+    });
 
     // delete addProduct id
-    app.delete('/referee/:id',  async (req, res) => {
+    app.delete("/referee/:id", async (req, res) => {
       try {
         const id = req.params.id;
-        const filter = { _id: new ObjectId(id) }
+        const filter = { _id: new ObjectId(id) };
         const query = await refereeCollection.deleteOne(filter);
         res.send({
           success: true,
           data: query,
-          message: 'Successfully Delete'
-        })
-
+          message: "Successfully Delete",
+        });
       } catch (error) {
         res.send({
           success: false,
           error: error.message,
-        })
+        });
       }
-    })
+    });
 
     // delete coupon id
-    app.delete('/coupon/:id',  async (req, res) => {
+    app.delete("/coupon/:id", async (req, res) => {
       try {
         const id = req.params.id;
-        const filter = { _id: new ObjectId(id) }
+        const filter = { _id: new ObjectId(id) };
         const query = await couponCollection.deleteOne(filter);
         res.send({
           success: true,
           data: query,
-          message: 'Successfully Delete'
-        })
-
+          message: "Successfully Delete",
+        });
       } catch (error) {
         res.send({
           success: false,
           error: error.message,
-        })
+        });
       }
-    })
+    });
 
-
-  }
-  finally {
+    app.post("/add-csv-data", async (req, res) => {
+      const data = req.body;
+      // console.log("data: ", data);
+      const result = await csvBulkData.insertMany(data);
+      res.send(result);
+      console.log("result: ", result);
+    });
+    app.get("/get-questions", async (req, res) => {
+      const searchParameteresForQueriesString =
+        req.headers.searchparameteresforqueries;
+      const searchParameteresForQueries = JSON.parse(
+        searchParameteresForQueriesString
+      );
+      // console.log("searchParameteresForQueries: ", searchParameteresForQueries);
+      const { topicName, questionName, difficultyLevel } =
+        searchParameteresForQueries;
+      let query = {};
+      if (topicName) query.topicName = topicName;
+      if (questionName) query.questionName = questionName;
+      if (difficultyLevel) query.difficultyLevel = difficultyLevel;
+      console.log("query: ", query);
+      if (!Object.keys(query).length) {
+        console.log("xxxxxxxxxxxxxxxxx");
+        return res.send([]);
+      }
 
       // const query = { runtime: { $lt: 15 } };
       // const options = {
       //   // sort returned documents in ascending order by title (A->Z)
       //   sort: { title: 1 },
-      //   // Include only the `title` and `imdb` fields in each returned document
+      //   // Include only the title and imdb fields in each returned document
       //   projection: { _id: 0, title: 1, imdb: 1 },
       // };
       const result = await csvBulkData.find(query).toArray();
@@ -321,17 +335,19 @@ async function run() {
       // console.log("result: ", result);
       res.send(result);
     });
+    app.get("/getAssessment", async (req, res) => {
+      const _id = req?.query?._id;
+      const query = { _id: new ObjectId("642ef65ea8cb9b3eb52cd09e") };
+      console.log("hitted");
+      const result = await assesmentData.findOne(query);
+      res.send(result);
+    });
   } finally {
   }
 }
-run().catch(err => console.error(err));
+run().catch((err) => console.error(err));
 
 // Amit server code
-
-
-
-
-
 
 app.get("/", async (req, res) => {
   res.send("Geeks of Gurukul Server is running");
