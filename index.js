@@ -676,7 +676,7 @@ async function run() {
     });
 
     //update course
-    app.put("/update-course", async (req, res) => {
+    app.put("/course/:id", async (req, res) => {
       const course = req.body;
       const { _id,courseName, courseId, duration,programName,regularPrice,offerPrice,courseDetail } = course;
       const filter = { _id: _id };
@@ -695,7 +695,7 @@ async function run() {
       res.send(result);
     });
     //update batch
-    app.put("/update-batch", async (req, res) => {
+    app.put("/batch/:id", async (req, res) => {
       const batch = req.body;
       const { _id,courseId,batchId,startedAt,duration } = batch;
       const filter = { _id: _id };
