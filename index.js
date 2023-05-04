@@ -674,6 +674,42 @@ async function run() {
         });
       }
     });
+
+    //update course
+    app.put("/update-course", async (req, res) => {
+      const course = req.body;
+      const { _id,courseName, courseId, duration,programName,regularPrice,offerPrice,courseDetail } = course;
+      const filter = { _id: _id };
+      const updateDoc = {
+        $set: {
+          courseName: courseName,
+          courseId: courseId,
+          duration: duration,
+          programName: programName,
+          regularPrice: regularPrice,
+          offerPrice: offerPrice,
+          courseDetail:courseDetail
+        },
+      };
+      const result = await courseDetails.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+    //update batch
+    app.put("/update-batch", async (req, res) => {
+      const batch = req.body;
+      const { _id,courseId,batchId,startedAt,duration } = batch;
+      const filter = { _id: _id };
+      const updateDoc = {
+        $set: {
+          courseId: courseId,
+          batchId: batchId,
+          startedAt:startedAt,
+          duration: duration,
+        },
+      };
+      const result = await batchDetails.updateOne(filter, updateDoc);
+      res.send(result);
+    });
     // LMS API
   } finally {
   }
