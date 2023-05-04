@@ -638,6 +638,43 @@ async function run() {
       const data = await batchDetails.find(query).toArray();
       res.send(data);
     });
+
+    // delete course id
+    app.delete("/course/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const query = await courseDetails.deleteOne(filter);
+        res.send({
+          success: true,
+          data: query,
+          message: "Successfully Delete",
+        });
+      } catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        });
+      }
+    });
+    // delete batch id
+    app.delete("/batch/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const query = await batchDetails.deleteOne(filter);
+        res.send({
+          success: true,
+          data: query,
+          message: "Successfully Delete",
+        });
+      } catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        });
+      }
+    });
     // LMS API
   } finally {
   }
