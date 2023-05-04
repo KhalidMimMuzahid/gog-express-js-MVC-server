@@ -492,7 +492,6 @@ async function run() {
       res.send(result);
       console.log("result: ", result);
     });
-
     app.get("/get-questions", async (req, res) => {
       const searchParameteresForQueriesString =
         req.headers.searchparameteresforqueries;
