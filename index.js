@@ -24,6 +24,13 @@ async function run() {
   try {
     // collection 1
     const usersCollection = client.db("users").collection("usersCollection");
+    // courseCollection
+    const courseDetails = client
+      .db("courseDatabase")
+      .collection("courseDetails");
+    //BatchCollection
+    const batchDetails = client.db("batchDatabase").collection("batchDetails");
+
     const userBasicCollection = client
       .db("users")
       .collection("userBasicCollection");
@@ -602,6 +609,72 @@ async function run() {
         });
       }
     });
+
+    // LMS API
+    // for adding batch(post)
+    app.post("/add-batch", async (req, res) => {
+      const batch = req.body;
+      const result = await batchDetails.insertOne(batch);
+      console.log("result: ", result);
+      res.send(result);
+    });
+    // for adding course(post)
+    app.post("/add-course", async (req, res) => {
+      const course = req.body;
+      const result = await courseDetails.insertOne(course);
+      console.log("result: ", result);
+      res.send(result);
+    });
+    //for getting course list
+    app.get("/course-list", async (req, res) => {
+      const query = {};
+      const data = await courseDetails.find(query).toArray();
+      res.send(data);
+    });
+    //for getting batch list
+    app.get("/batch-list", async (req, res) => {
+      const query = {};
+      const data = await batchDetails.find(query).toArray();
+      res.send(data);
+    });
+
+    // delete course id
+    app.delete("/course/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const query = await courseDetails.deleteOne(filter);
+        res.send({
+          success: true,
+          data: query,
+          message: "Successfully Delete",
+        });
+      } catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        });
+      }
+    });
+    // delete batch id
+    app.delete("/batch/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const query = await batchDetails.deleteOne(filter);
+        res.send({
+          success: true,
+          data: query,
+          message: "Successfully Delete",
+        });
+      } catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        });
+      }
+    });
+    // LMS API
   } finally {
   }
 }
