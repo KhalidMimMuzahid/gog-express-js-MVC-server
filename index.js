@@ -335,13 +335,6 @@ async function run() {
       // console.log("result: ", result);
       res.send(result);
     });
-    app.get("/getAssessment", async (req, res) => {
-      const _id = req?.query?._id;
-      const query = { _id: new ObjectId("642ef65ea8cb9b3eb52cd09e") };
-      console.log("hitted");
-      const result = await assesmentData.findOne(query);
-      res.send(result);
-    });
   } finally {
   }
 }
