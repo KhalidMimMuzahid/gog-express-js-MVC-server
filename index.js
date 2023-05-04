@@ -24,12 +24,18 @@ async function run() {
   try {
     // collection 1
     const usersCollection = client.db("users").collection("usersCollection");
+    const userBasicCollection = client
+      .db("users")
+      .collection("userBasicCollection");
     const applyDataCollection = client
       .db("appliedUserDetails")
       .collection("usersApplyDataCollection");
     const couponCollection = client
       .db("appliedUserDetails")
       .collection("couponCollection");
+    const chatBotUserMessageCollection = client
+      .db("chatbotData")
+      .collection("chatBotUserMessageCollection");
     const refereeCollection = client
       .db("appliedUserDetails")
       .collection("refereeCollection");
@@ -37,13 +43,62 @@ async function run() {
     const assesmentData = client
       .db("questionsBank")
       .collection("assesmentData");
+    const programPriceData = client
+      .db("programPrices")
+      .collection("programPricesCollection");
 
-    // user(buyer and seller) data save------------
+    app.get("/checkuseralreadyindatabase", async (req, res) => {
+      const email = req?.query?.email;
+      console.log("email: ", email);
+      const query = { email: email };
+      const result = await userBasicCollection.findOne(query);
+      console.log("result check: ", result);
+      if (result) {
+        res.send({ isUserAlreadyExists: true });
+      } else {
+        res.send({ isUserAlreadyExists: false });
+      }
+    });
+
+    // phone number verification
+    app.get("/checkuserphoneverified", async (req, res) => {
+      const email = req?.query?.email;
+      console.log("email: ", email);
+      const query = { email: email };
+      const result = await userBasicCollection.findOne(query);
+      console.log("result check: ", result);
+      if (result?.phoneNumber) {
+        res.send({ isPhoneVerified: true });
+      } else {
+        res.send({ isPhoneVerified: false });
+      }
+    });
+
+    // user(buyer and seller) intial sign up data data save------------
+    app.post("/usersbasics", async (req, res) => {
+      const userBasicDetails = req.body;
+      console.log("userBasicDetails: ", userBasicDetails);
+      const result = await userBasicCollection.insertOne(userBasicDetails);
+      res.send(result);
+    });
+    app.put("/update-phone", async (req, res) => {
+      const user = req.body;
+      const { email, phoneNumber, displayName } = user;
+      const filter = { email: email };
+      const updateDoc = {
+        $set: {
+          phoneNumber: phoneNumber,
+          name: displayName,
+        },
+      };
+      const result = await userBasicCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+    // user(buyer and seller) intial sign up data data save------------
     app.put("/users", async (req, res) => {
       const user = req.body;
       const email = user.email;
-      const phone = user.phone;
-      const filter = { $and: [{ email: email }, { phone: phone }] };
+      const filter = { email: email };
       const options = { upsert: true }; // verfiy the dupate data
       const updateDoc = {
         $set: user,
@@ -54,6 +109,38 @@ async function run() {
         options
       );
       res.send(result);
+    });
+
+    // Update the user name
+    app.put("/usersname", async (req, res) => {
+      try {
+        const userinfo = req.body;
+        const email = req.body.email;
+        const filter = { email: email };
+        const option = { upsert: true };
+        const updateId = {
+          $set: {
+            name: userinfo.name,
+          },
+        };
+        console.log(updateId);
+        const result = await usersCollection.updateOne(
+          filter,
+          updateId,
+          option
+        );
+        console.log(result);
+        res.send({
+          success: true,
+          data: result,
+          message: "Successfully ",
+        });
+      } catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        });
+      }
     });
 
     // user(buyer and seller) data save------------
@@ -75,10 +162,14 @@ async function run() {
       res.send(result);
     });
 
-    // get users
-    app.get("/users", async (req, res) => {
-      const query = {};
-      const data = await usersCollection.find(query).toArray();
+    // set rhe s30 tah in users collection
+    app.put("/users-s30", async (req, res) => {
+      const users = req.body;
+      const email = users.email;
+      const filter = { email: email };
+      const data = await usersCollection.updateOne(filter, {
+        $set: { tag: "s30" },
+      });
       res.send(data);
     });
 
@@ -87,6 +178,87 @@ async function run() {
       const query = {};
       const data = await usersCollection.find(query).toArray();
       res.send(data);
+    });
+    // get users for the check mobile mumber
+    app.get("/checkuserindatabase", async (req, res) => {
+      const numberString = req.headers.number;
+      const number = JSON.parse(numberString);
+      console.log(number);
+      const query = { phone: number };
+      const data = await usersCollection.findOne(query);
+      console.log("data: ", data);
+      const data2 = {
+        user: data,
+      };
+      res.send(data2);
+    });
+
+    // get users
+    app.get("/users", async (req, res) => {
+      const query = {};
+      const data = await usersCollection.find(query).toArray();
+      res.send(data);
+    });
+
+    // post messages for chatbot collection
+    app.post("/chat-bot-mesages", async (req, res) => {
+      try {
+        const usermessage = req.body;
+        console.log(usermessage);
+        const result = await chatBotUserMessageCollection.insertOne(
+          usermessage
+        );
+        res.send({
+          success: true,
+          data: result,
+          message: "Successfully post ",
+        });
+      } catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        });
+      }
+    });
+
+    // get admin admin user
+    app.get("/userinfo/:email", async (req, res) => {
+      try {
+        const email = req.params.email;
+        console.log(email);
+        const query = { email };
+
+        console.log(query);
+        const users = await usersCollection.findOne(query);
+        res.send(users);
+      } catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        });
+      }
+    });
+
+    // get userData for phone verify -s
+    app.get("/userinfoforphone/:email", async (req, res) => {
+      try {
+        const email = req.params.email;
+        //console.log(email);
+        const query = { email };
+        console.log(query);
+        const users = await usersCollection.findOne(query);
+        //console.log(users);
+        if (users.phone) {
+          res.send({ status: 200, message: "phone verified" });
+        } else {
+          res.send({ status: 404, message: "phone not verified" });
+        }
+      } catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        });
+      }
     });
 
     // single user
@@ -118,9 +290,11 @@ async function run() {
             email: userinfo.email,
             phone: userinfo.phone,
             date: userinfo.date,
-            course: userinfo.course,
             refelInput: userinfo.refelInput,
             gander: userinfo.gander,
+          },
+          $push: {
+            course: userinfo.course,
           },
         };
         console.log(updateId);
@@ -138,6 +312,25 @@ async function run() {
           data: result,
           message: "Successfully ",
         });
+      } catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        });
+      }
+    });
+
+    // admin
+    app.get("/admin/:email", async (req, res) => {
+      try {
+        const email = req.params.email;
+        console.log(email);
+        const query = { email };
+        console.log(query);
+        const users = await usersCollection.findOne(query);
+        const role = users?.roll === "admin";
+        console.log(role);
+        res.send(role);
       } catch (error) {
         res.send({
           success: false,
@@ -329,11 +522,85 @@ async function run() {
       // console.log("result: ", result);
       res.send(result);
     });
+
     app.post("/add-assesment", async (req, res) => {
       const assesment = req.body;
       const result = await assesmentData.insertOne(assesment);
       // console.log("result: ", result);
       res.send(result);
+    });
+    // app.get("/add-assesment", async (req, res) => {
+    //   const query = {};
+    //   const data = await assesmentData.find(query).toArray();
+    //   res.send(data);
+    // });
+
+    // get coupon collection
+    app.get("/program", async (req, res) => {
+      try {
+        const query = {};
+
+        const result = await programPriceData.find(query).toArray();
+
+        res.send({
+          success: true,
+          data: result,
+          message: "Successfully ",
+        });
+      } catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        });
+      }
+    });
+
+    // get coupon collection
+
+    app.get("/program/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await programPriceData.findOne(query);
+        console.log(result);
+        res.send(result);
+      } catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        });
+      }
+    });
+
+    // put report
+    app.put("/newprice", async (req, res) => {
+      try {
+        const program = req.body;
+        const id = program.id;
+        const filter = { _id: new ObjectId(id) };
+        const option = { upsert: true };
+        const updateId = {
+          $set: {
+            price: program.coupon,
+          },
+        };
+        const result = await programPriceData.updateOne(
+          filter,
+          updateId,
+          option
+        );
+        console.log(result);
+        res.send({
+          success: true,
+          data: result,
+          message: "Successfully get data",
+        });
+      } catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        });
+      }
     });
   } finally {
   }
