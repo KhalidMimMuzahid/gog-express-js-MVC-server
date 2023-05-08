@@ -66,6 +66,19 @@ async function run() {
         res.send({ isUserAlreadyExists: false });
       }
     });
+    app.get("/checkphonealreadyinused/:number", async (req, res) => {
+      // const number = req?.query?.number;
+      const number = req?.params?.number;
+      console.log("number: ", number);
+      const query = { phoneNumber: number };
+      const result = await userBasicCollection.findOne(query);
+      console.log("result check: ", result);
+      if (result) {
+        res.send({ isNumberAlreadyExists: true });
+      } else {
+        res.send({  isNumberAlreadyExists: false });
+      }
+    });
 
     // phone number verification
     app.get("/checkuserphoneverified", async (req, res) => {
@@ -190,10 +203,10 @@ async function run() {
     app.get("/checkuserindatabase", async (req, res) => {
       const numberString = req.headers.number;
       const number = JSON.parse(numberString);
-      console.log(number);
+     // console.log(number);
       const query = { phone: number };
       const data = await usersCollection.findOne(query);
-      console.log("data: ", data);
+     // console.log("data: ", data);
       const data2 = {
         user: data,
       };
@@ -235,9 +248,11 @@ async function run() {
         console.log(email);
         const query = { email };
 
-        console.log(query);
-        const user = await userBasicCollection.findOne(query);
-        res.send(user);
+
+       // console.log(query);
+        const users = await userBasicCollection.findOne(query);
+        res.send(users);
+
       } catch (error) {
         res.send({
           success: false,
@@ -252,7 +267,7 @@ async function run() {
         const email = req.params.email;
         //console.log(email);
         const query = { email };
-        console.log(query);
+        //console.log(query);
         const users = await usersCollection.findOne(query);
         //console.log(users);
         if (users.phone) {
@@ -274,7 +289,7 @@ async function run() {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) };
         const result = await usersCollection.findOne(query);
-        console.log(result);
+       // console.log(result);
         res.send(result);
       } catch (error) {
         res.send({
