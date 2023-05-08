@@ -248,9 +248,11 @@ async function run() {
         console.log(email);
         const query = { email };
 
-        // console.log(query);
+
+       // console.log(query);
         const users = await userBasicCollection.findOne(query);
         res.send(users);
+
       } catch (error) {
         res.send({
           success: false,
@@ -547,6 +549,17 @@ async function run() {
       const assesment = req.body;
       const result = await assesmentData.insertOne(assesment);
       // console.log("result: ", result);
+      res.send(result);
+    });
+    app.get("/assessments", async (req, res) => {
+      const result = await assesmentData.find().toArray();
+      res.send(result);
+    });
+    app.get("/assessment", async (req, res) => {
+      const _id = req?.query?._id;
+      console.log("_id: ", _id);
+      const query = { _id: new ObjectId(_id) };
+      const result = await assesmentData.findOne(query);
       res.send(result);
     });
     // app.get("/add-assesment", async (req, res) => {
