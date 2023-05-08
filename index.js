@@ -50,6 +50,9 @@ async function run() {
     const assesmentData = client
       .db("questionsBank")
       .collection("assesmentData");
+    const assesmentResponseData = client
+      .db("examsReponse")
+      .collection("assesmentResponseData");
     const programPriceData = client
       .db("programPrices")
       .collection("programPricesCollection");
@@ -545,6 +548,60 @@ async function run() {
       console.log("_id: ", _id);
       const query = { _id: new ObjectId(_id) };
       const result = await assesmentData.findOne(query);
+      // console.log("result: ", result);
+      res.send(result);
+    });
+    app.get("/assessmentlabel", async (req, res) => {
+      const _id = req?.query?._id;
+      console.log("_id: ", _id);
+      const query = { _id: new ObjectId(_id) };
+      const options = {
+        // Include only the `title` and `imdb` fields in each returned document
+        projection: {
+          assessmentName: 1,
+          duration: 1,
+          categoryName: 1,
+        },
+      };
+      const result = await assesmentData.findOne(query, options);
+      // console.log("result: ", result);
+      res.send(result);
+    });
+    app.post("/assessment-response", async (req, res) => {
+      const response = req.body;
+      // console.log("response: ", response);
+      const result = await assesmentResponseData.insertOne(response);
+      console.log("response:", response);
+      res.send(result);
+    });
+    app.get("/assessment-response", async (req, res) => {
+      const _id = req?.query?._id;
+      console.log("_id: ", _id);
+      const query = { _id: new ObjectId(_id) };
+      const result = await assesmentResponseData.findOne(query);
+      console.log("result: ", result);
+      res.send(result);
+    });
+    app.get("/assessment-responses", async (req, res) => {
+      const email = req?.query?.email;
+      console.log("email: ", email);
+      const query = { studentEmail: email };
+
+      const options = {
+        sort: {
+          startedAt: 1,
+        },
+        // Include only the `title` and `imdb` fields in each returned document
+        projection: {
+          title: 1,
+          startedAt: 1,
+          totalMark: 1,
+          assessmentId: 1,
+          aboutResponse: 1,
+        },
+      };
+      const result = await assesmentResponseData.find(query, options).toArray();
+
       res.send(result);
     });
     // app.get("/add-assesment", async (req, res) => {
@@ -689,7 +746,16 @@ async function run() {
     //update course
     app.put("/course/:id", async (req, res) => {
       const course = req.body;
-      const { _id,courseName, courseId, duration,programName,regularPrice,offerPrice,courseDetail } = course;
+      const {
+        _id,
+        courseName,
+        courseId,
+        duration,
+        programName,
+        regularPrice,
+        offerPrice,
+        courseDetail,
+      } = course;
       const filter = { _id: _id };
       const updateDoc = {
         $set: {
@@ -699,7 +765,7 @@ async function run() {
           programName: programName,
           regularPrice: regularPrice,
           offerPrice: offerPrice,
-          courseDetail:courseDetail
+          courseDetail: courseDetail,
         },
       };
       const result = await courseDetails.updateOne(filter, updateDoc);
@@ -708,13 +774,13 @@ async function run() {
     //update batch
     app.put("/batch/:id", async (req, res) => {
       const batch = req.body;
-      const { _id,courseId,batchId,startedAt,duration } = batch;
+      const { _id, courseId, batchId, startedAt, duration } = batch;
       const filter = { _id: _id };
       const updateDoc = {
         $set: {
           courseId: courseId,
           batchId: batchId,
-          startedAt:startedAt,
+          startedAt: startedAt,
           duration: duration,
         },
       };
