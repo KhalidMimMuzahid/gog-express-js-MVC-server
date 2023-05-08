@@ -76,7 +76,7 @@ async function run() {
       if (result) {
         res.send({ isNumberAlreadyExists: true });
       } else {
-        res.send({  isNumberAlreadyExists: false });
+        res.send({ isNumberAlreadyExists: false });
       }
     });
 
@@ -203,10 +203,10 @@ async function run() {
     app.get("/checkuserindatabase", async (req, res) => {
       const numberString = req.headers.number;
       const number = JSON.parse(numberString);
-     // console.log(number);
+      // console.log(number);
       const query = { phone: number };
       const data = await usersCollection.findOne(query);
-     // console.log("data: ", data);
+      // console.log("data: ", data);
       const data2 = {
         user: data,
       };
@@ -289,7 +289,7 @@ async function run() {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) };
         const result = await usersCollection.findOne(query);
-       // console.log(result);
+        // console.log(result);
         res.send(result);
       } catch (error) {
         res.send({
@@ -704,7 +704,16 @@ async function run() {
     //update course
     app.put("/course/:id", async (req, res) => {
       const course = req.body;
-      const { _id,courseName, courseId, duration,programName,regularPrice,offerPrice,courseDetail } = course;
+      const {
+        _id,
+        courseName,
+        courseId,
+        duration,
+        programName,
+        regularPrice,
+        offerPrice,
+        courseDetail,
+      } = course;
       const filter = { _id: _id };
       const updateDoc = {
         $set: {
@@ -714,7 +723,7 @@ async function run() {
           programName: programName,
           regularPrice: regularPrice,
           offerPrice: offerPrice,
-          courseDetail:courseDetail
+          courseDetail: courseDetail,
         },
       };
       const result = await courseDetails.updateOne(filter, updateDoc);
@@ -723,13 +732,13 @@ async function run() {
     //update batch
     app.put("/batch/:id", async (req, res) => {
       const batch = req.body;
-      const { _id,courseId,batchId,startedAt,duration } = batch;
+      const { _id, courseId, batchId, startedAt, duration } = batch;
       const filter = { _id: _id };
       const updateDoc = {
         $set: {
           courseId: courseId,
           batchId: batchId,
-          startedAt:startedAt,
+          startedAt: startedAt,
           duration: duration,
         },
       };
