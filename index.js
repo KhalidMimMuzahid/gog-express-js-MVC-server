@@ -74,6 +74,20 @@ async function run() {
       }
     });
 
+    app.get("/checkphonealreadyinused/:number", async (req, res) => {
+      // const number = req?.query?.number;
+      const number = req?.params?.number;
+      console.log("number: ", number);
+      const query = { phoneNumber: number };
+      const result = await userBasicCollection.findOne(query);
+      console.log("result check: ", result);
+      if (result) {
+        res.send({ isNumberAlreadyExists: true });
+      } else {
+        res.send({ isNumberAlreadyExists: false });
+      }
+    });
+
     // phone number verification
     app.get("/checkuserphoneverified", async (req, res) => {
       const email = req?.query?.email;
