@@ -26,9 +26,9 @@ async function run() {
     // collection 1
     const usersCollection = client.db("users").collection("usersCollection");
     // courseCollection
-    const courseDetails = client
-      .db("courseDatabase")
-      .collection("courseDetails");
+    const courseDetails = client.db("courseDatabase").collection("courseDetails");
+    //assignment Collection
+    const assignmentDetails = client.db("assignmentDatabase").collection("assignmentDetails");
     //BatchCollection
     const batchDetails = client.db("batchDatabase").collection("batchDetails");
 
@@ -826,7 +826,23 @@ async function run() {
       const result = await batchDetails.updateOne(filter, updateDoc);
       res.send(result);
     });
+
+
+
+
     // LMS API
+
+    //assignments details
+    app.post('/assignmentDetails', async(req, res)=>{
+      const assignment = req.body; 
+      const result = await assignmentDetails.insertOne(assignment);
+      console.log("result: ", result);
+      res.send(result);
+
+    })
+
+
+
   } finally {
   }
 }
