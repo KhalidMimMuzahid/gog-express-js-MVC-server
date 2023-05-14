@@ -14,7 +14,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.wtm3mfw.mongodb.net/?retryWrites=true&w=majority`;
+const uri = process.env.MONGO_URL;
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -22,13 +22,19 @@ const client = new MongoClient(uri, {
 });
 
 async function run() {
+
+
+
+
   try {
     // collection 1
     const usersCollection = client.db("users").collection("usersCollection");
     // courseCollection
-    const courseDetails = client
-      .db("courseDatabase")
-      .collection("courseDetails");
+    const courseDetails = client.db("courseDatabase").collection("courseDetails");
+    //assignment Collection
+    const assignmentDetails = client.db("courseDatabase").collection("assignmentDetails");
+    // Collection
+    const exerciseDetails = client.db("courseDatabase").collection("exerciseDetails");
     //BatchCollection
     const batchDetails = client.db("batchDatabase").collection("batchDetails");
 
@@ -800,7 +806,7 @@ async function run() {
         $set: {
           courseName: courseName,
           courseId: courseId,
-          duration: duration,
+          duration: duration, 
           programName: programName,
           regularPrice: regularPrice,
           offerPrice: offerPrice,
@@ -826,7 +832,100 @@ async function run() {
       const result = await batchDetails.updateOne(filter, updateDoc);
       res.send(result);
     });
+
+
+
+
     // LMS API
+
+    //assignments details
+    app.post('/assignmentDetails', async(req, res)=>{
+      try{
+        const assignment = req.body;   
+        console.log(assignment);
+        const result = await assignmentDetails.insertOne(assignment); 
+        if(result?.acknowledged){
+          res.send({
+            success: true,
+            data: result,
+            message: "Assignment Successful Added",
+          })
+        }
+      }catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        });
+      }
+
+
+    })
+
+
+    //exercise details
+    app.post('/exerciseDetails', async(req, res)=>{
+      try{
+        const exercise = req.body;    
+     
+        const result = await exerciseDetails.insertOne(exercise); 
+        if(result?.acknowledged){
+          res.send({
+            success: true, 
+            data: result,
+            message: "Exercise Successful Added",
+          })
+        }
+        else{
+          res.send({
+            success: false,
+            message: 'server internal error',
+          });
+        }
+      }catch (error) {
+        console.log('error',error)
+        res.send({
+          success: false,
+          message: error.message,
+        });
+      }
+
+
+    })
+
+    // find exercise details by exercise name
+    app.get("/exerciseSearch", async (req, res) => { 
+      try {
+        const query = {};
+
+        const result = await exerciseDetails.find(query).toArray();
+
+        if(result){
+          res.send({
+            success: true,
+            data: result,
+            message: "Successfully",
+          });
+        }
+        else{
+          res.send({
+            success: false,
+            message: 'server internal error',
+          });
+        }
+        
+      } catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        });
+      }
+    });
+
+
+   
+
+
+
   } finally {
   }
 }
