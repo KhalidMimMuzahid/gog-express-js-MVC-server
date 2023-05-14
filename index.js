@@ -14,7 +14,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.wtm3mfw.mongodb.net/?retryWrites=true&w=majority`;
+const uri = process.env.MONGO_URL
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -28,9 +28,9 @@ async function run() {
     // courseCollection
     const courseDetails = client.db("courseDatabase").collection("courseDetails");
     //assignment Collection
-    const assignmentDetails = client.db("assignmentDatabase").collection("assignmentDetails");
+    const assignmentDetails = client.db("courseDatabase").collection("assignmentDetails");
     // Collection
-    const exerciseCollection = client.db("exerciseDatabase").collection("exerciseDetails");
+    const exerciseCollection = client.db("courseDatabase").collection("exerciseDetails");
     //BatchCollection
     const batchDetails = client.db("batchDatabase").collection("batchDetails");
 
@@ -847,6 +847,11 @@ async function run() {
             data: result,
             message: "Assignment Successful Added",
           })
+        }else{
+          res.send({
+            success: false,
+            message: "Server internal error",
+          });
         }
       }catch (error) {
         res.send({
@@ -872,6 +877,11 @@ async function run() {
             data: result,
             message: "Exercise Successful Added",
           })
+        }else{
+          res.send({
+            success: false,
+            message: "Server internal error",
+          });
         }
       }catch (error) {
         res.send({
@@ -883,6 +893,31 @@ async function run() {
 
     })
 
+    app.get("/exerciseSearch", async (req, res) => {
+      try{
+        const query = {};
+      const data = await exerciseCollection.find(query).toArray();
+        if(data){
+          res.send({
+            success: true,
+            data: data,
+            message: "Exercise Successful Added",
+          }
+          )
+          
+        }else{
+          res.send({
+            success: false,
+            message: "Server internal error",
+          });
+        }
+      }catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        });
+      }
+    });
 
 
   } finally {
