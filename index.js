@@ -22,7 +22,7 @@ const client = new MongoClient(uri, {
 });
 
 async function run() {
-  try {
+  try { 
     // collection 1
     const usersCollection = client.db("users").collection("usersCollection");
     // courseCollection
@@ -31,6 +31,8 @@ async function run() {
     const assignmentDetails = client.db("courseDatabase").collection("assignmentDetails");
     // Collection
     const exerciseCollection = client.db("courseDatabase").collection("exerciseDetails");
+    //lecture Collection
+    const lessonCollection = client.db("courseDatabase").collection("LectureDetails");
     //BatchCollection
     const batchDetails = client.db("batchDatabase").collection("batchDetails");
 
@@ -893,31 +895,73 @@ async function run() {
 
     })
 
-    app.get("/exerciseSearch", async (req, res) => {
-      try{
-        const query = {};
+    app.get('/exerciseSearch', async (req, res) => {
+      try{ 
+        const queers = JSON.parse(req?.headers?.data);   
+        const queryTemp = queers? {...queers} : {};
+        const query = {}
+        const dataKeys = Object.keys(queryTemp)
+        dataKeys.forEach(key => {
+          if(queryTemp[key]){
+            query[key] = queryTemp[key];
+          }
+        })
+
+        // console.log(query)
       const data = await exerciseCollection.find(query).toArray();
-        if(data){
-          res.send({
+        if(data?.length > 0){
+          res?.send({
             success: true,
             data: data,
-            message: "Exercise Successful Added",
+            message: "Exercise found successfully",
           }
-          )
+          ) 
           
         }else{
-          res.send({
+          res?.send({
             success: false,
             message: "Server internal error",
           });
         }
       }catch (error) {
-        res.send({
+        res?.send({
           success: false,
           error: error.message,
         });
       }
     });
+
+
+    //add Lecture 
+    // app.post('/lectureDetails', async(req, res)=>{
+    //   try{
+    //     const lecture = req.body;   
+    //     console.log(lecture);
+    //     const result = await lessonCollection.insertOne(lecture);
+    //     console.log("result: ", result);
+    //     if(result?.acknowledged){
+    //       res.send({
+    //         success: true,
+    //         data: result,
+    //         message: "Lecture Successful Added",
+    //       })
+    //     }else{
+    //       res.send({
+    //         success: false,
+    //         message: "Server internal error",
+    //       });
+    //     }
+    //   }catch (error) {
+    //     res.send({
+    //       success: false,
+    //       error: error.message,
+    //     });
+    //   }
+
+
+    // });
+
+
 
 
   } finally {
