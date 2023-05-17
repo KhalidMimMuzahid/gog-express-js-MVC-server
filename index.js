@@ -32,7 +32,7 @@ const exerciseCollection = client
   .db("courseDatabase")
   .collection("exerciseDetails");
 //BatchCollection
-const batchDetails = client.db("batchDatabase").collection("batchDetails");
+const batchDetails = client.db("courseDatabase").collection("batchDetails");
 
 const userBasicCollection = client
   .db("users")
