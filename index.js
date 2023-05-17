@@ -5,6 +5,7 @@ const moment = require("moment");
 // const jwt = require('jsonwebtoken');
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const e = require("express");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 
@@ -46,6 +47,75 @@ const assesmentData = client.db("questionsBank").collection("assesmentData");
 const assesmentResponseData = client
   .db("examsReponse")
   .collection("assesmentResponseData");
+  
+  const programDetails = client.db("courseDatabase").collection("programDetails");
+  const couponDetails = client.db("courseDatabase").collection("couponDetails");
+
+
+app.get("/all-program", async (req, res) => {
+  try{
+    const query = {};
+    const allProgram = await programDetails.find(query).toArray();
+    res.send({data: allProgram})
+  }catch{
+    res.send({data: []})
+  }
+})
+
+app.post("/add-program", async (req, res) => {
+  try {
+    const program = req?.body;
+    //console.log("program", program);
+    const query = {};
+    const allData = await programDetails.find(query).toArray();
+    //console.log("hiii", allData);
+    if (!allData?.length) {
+      const result = await programDetails.insertOne(program);
+      if (result?.acknowledged) {
+        res.send({ success: true, message: "program successfully added." });
+      } else {
+        res.send({
+          success: false,
+          message: "something went wrong, please try again.",
+        });
+      }
+    } else {
+      //to do
+      // check the program data exist or not
+      let isAlreadyExists = false;
+      allData.forEach((each) => {
+        if (
+          each?.programName?.toLowerCase() ===
+          program?.programName?.toLowerCase()
+        ) {
+          isAlreadyExists = true;
+          return;
+        }
+      });
+      if (isAlreadyExists) {
+        res.send({
+          success: false,
+          message: "this program Name is already exists",
+        });
+      } else {
+        const result = await programDetails.insertOne(program);
+        if (result?.acknowledged) {
+          res.send({ success: true, message: "program successfully added." });
+        } else {
+          res.send({
+            success: false,
+            message: "something went wrong, please try again.",
+          });
+        }
+      }
+    }
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
 
 app.get("/checkuseralreadyindatabase", async (req, res) => {
   try {
@@ -540,6 +610,21 @@ app.get("/exerciseSearch", async (req, res) => {
         message: "Server internal error",
       });
     }
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+
+app.post("/coupon-details", async (req, res) => {
+  try {
+    const couponDetailsFromUI = req.body;
+    console.log("couponDetails: ", couponDetailsFromUI);
+    const result = await couponDetails.insertOne(couponDetailsFromUI);
+    res.send(result);
   } catch (error) {
     res.send({
       success: false,
