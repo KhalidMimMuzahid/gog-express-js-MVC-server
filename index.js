@@ -32,6 +32,10 @@ const assignmentDetails = client
 const exerciseCollection = client
   .db("courseDatabase")
   .collection("exerciseDetails");
+// Collection
+const lectureCollection = client
+  .db("courseDatabase")
+  .collection("LectureDetails");
 //BatchCollection
 const batchDetails = client.db("batchDatabase").collection("batchDetails");
 
@@ -571,18 +575,18 @@ app.post("/assignmentDetails", async (req, res) => {
 app.post("/exerciseDetails", async (req, res) => {
   try {
     const exercise = req.body;
-    console.log(assignment);
+    // console.log(exercise) 
     const result = await exerciseCollection.insertOne(exercise);
     console.log("result: ", result);
     if (result?.acknowledged) {
       res.send({
-        success: true,
+        success: true, 
         data: result,
         message: "Exercise Successful Added",
       });
     } else {
       res.send({
-        success: false,
+        success: false, 
         message: "Server internal error",
       });
     }
@@ -594,29 +598,115 @@ app.post("/exerciseDetails", async (req, res) => {
   }
 });
 
-app.get("/exerciseSearch", async (req, res) => {
-  try {
-    const query = {};
-    const data = await exerciseCollection.find(query).toArray();
-    if (data) {
-      res.send({
+app.get('/exerciseSearch', async (req, res) => {
+  try{ 
+    const queers = JSON.parse(req?.headers?.data);   
+    const queryTemp = queers? {...queers} : {};
+    const query = {}
+    if(queryTemp !== {}){
+      const dataKeys = Object.keys(queryTemp)
+    dataKeys.forEach(key => {
+      if(queryTemp[key]){
+        query[key] = queryTemp[key];
+      }
+    })
+    }
+
+    // console.log(query)
+  const data = await exerciseCollection.find(query).toArray();
+    if(data?.length > 0){
+      res?.send({
         success: true,
         data: data,
-        message: "Exercise Successful Added",
-      });
-    } else {
-      res.send({
+        message: "Exercise found successfully",
+      }
+      ) 
+      
+    }else{
+      res?.send({
         success: false,
         message: "Server internal error",
       });
     }
-  } catch (error) {
-    res.send({
+  }catch (error) {
+    res?.send({
       success: false,
       error: error.message,
     });
   }
 });
+
+
+
+
+// search assignment 
+
+app.get('/searchAssignment', async (req, res) => {
+  try{ 
+    const queers = JSON.parse(req?.headers?.data);   
+    console.log(queers)
+    const queryTemp = queers? {...queers} : {};
+    const query = {}
+    const dataKeys = Object.keys(queryTemp)
+    dataKeys.forEach(key => {
+      if(queryTemp[key]){
+        query[key] = queryTemp[key];
+      }
+    })
+
+    // console.log(query)
+  const data = await assignmentDetails.find(query).toArray();
+    if(data?.length > 0){
+      res?.send({
+        success: true,
+        data: data,
+        message: "Assignment found successfully",
+      }
+      ) 
+      
+    }else{
+      res?.send({
+        success: false,
+        message: "Server internal error",
+      });
+    }
+  }catch (error) {
+    res?.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+
+
+
+//add Lecture 
+    app.post('/lectureDetails', async(req, res)=>{
+      try{
+        const lecture = req.body;   
+        console.log(lecture);
+        const result = await lectureCollection.insertOne(lecture);
+        console.log("result: ", result);
+        if(result?.acknowledged){
+          res.send({
+            success: true,
+            data: result,
+            message: "Lecture Successful Added",
+          })
+        }else{
+          res.send({
+            success: false,
+            message: "Server internal error",
+          });
+        }
+      }catch (error) {
+        res.send({
+          success: false,
+          error: error.message,
+        });
+      }
+    })
 
 
 app.post("/coupon-details", async (req, res) => {
@@ -633,6 +723,7 @@ app.post("/coupon-details", async (req, res) => {
   }
 });
 
+
 // Amit server code
 
 app.get("/", async (req, res) => {
@@ -641,4 +732,4 @@ app.get("/", async (req, res) => {
 
 app.listen(port, () =>
   console.log(`Geeks of Gurukul Server running on ${port}`)
-);
+); 
