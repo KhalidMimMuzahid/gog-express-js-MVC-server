@@ -52,15 +52,15 @@ const assesmentResponseData = client
   const couponDetails = client.db("courseDatabase").collection("couponDetails");
 
 
-app.get("/all-program", async (req, res) => {
-  try{
-    const query = {};
-    const allProgram = await programDetails.find(query).toArray();
-    res.send({data: allProgram})
-  }catch{
-    res.send({data: []})
-  }
-})
+// app.get("/all-program", async (req, res) => {
+//   try{
+//     const query = {};
+//     const allProgram = await programDetails.find(query).toArray();
+//     res.send({data: allProgram})
+//   }catch{
+//     res.send({data: []})
+//   }
+// })
 
 app.post("/add-program", async (req, res) => {
   try {
@@ -633,15 +633,102 @@ app.post("/coupon-details", async (req, res) => {
   }
 });
 
-app.get("/all-coupons", async (req, res) => {
+// app.get("/all-coupons", async (req, res) => {
+//   try{
+//     const query = {};
+//     const allCoupon = await couponDetails.find(query).toArray();
+//     res.send({data: allCoupon})
+//   }catch{
+//     res.send({data: []})
+//   }
+// })
+
+
+// coupons search
+app.get('/all-coupons', async (req, res) => {
   try{
-    const query = {};
-    const allCoupon = await couponDetails.find(query).toArray();
-    res.send({data: allCoupon})
-  }catch{
-    res.send({data: []})
+    const queers = JSON.parse(req?.headers?.data);
+    // console.log(queers)
+    const queryTemp = queers? {...queers} : {};
+    let query = {}
+    const dataKeys = Object.keys(queryTemp)
+    dataKeys.forEach(key => {
+      if(queryTemp[key]){
+        query[key] = queryTemp[key];
+      }
+    })
+    if(query?.creatorEmail && query?.updaterEmail){
+      query ={
+        'actionsDetails.creation.creatorEmail': query?.creatorEmail,
+        'actionsDetails.updation.updaterEmail': query?.updaterEmail
+      }
+    }
+    else if(query?.creatorEmail){
+      query = {
+        'actionsDetails.creation.creatorEmail': query?.creatorEmail,
+      }
+    }else if(query?.updaterEmail){
+      query ={
+        'actionsDetails.updation.updaterEmail': query?.updaterEmail
+      }
+    }
+    // console.log(query)
+  const data = await couponDetails.find(query).toArray();
+    if(data?.length > 0){
+      res?.send({
+        success: true,
+        data: data,
+        message: "Assignment found successfully",
+      }
+      )
+    }else{
+      res?.send({
+        success: false,
+        message: "Server internal error",
+      });
+    }
+  }catch (error) {
+    res?.send({
+      success: false,
+      error: error.message,
+    });
   }
-})
+});
+//all programs and search
+app.get('/program-list', async (req, res) => {
+  try{
+    const queers = JSON.parse(req?.headers?.data);
+    console.log(queers)
+    const queryTemp = queers? {...queers} : {};
+    const query = {}
+    const dataKeys = Object.keys(queryTemp)
+    dataKeys.forEach(key => {
+      if(queryTemp[key]){
+        query[key] = queryTemp[key];
+      }
+    })
+    console.log(query)
+  const data = await programDetails.find(query).toArray();
+    if(data?.length > 0){
+      res?.send({
+        success: true,
+        data: data,
+        message: "Assignment found successfully",
+      }
+      )
+    }else{
+      res?.send({
+        success: false,
+        message: "Server internal error",
+      });
+    }
+  }catch (error) {
+    res?.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
 
 // Amit server code
 
