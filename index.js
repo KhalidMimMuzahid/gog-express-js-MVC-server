@@ -47,8 +47,9 @@ const assesmentData = client.db("questionsBank").collection("assesmentData");
 const assesmentResponseData = client
   .db("examsReponse")
   .collection("assesmentResponseData");
-
-const programDetails = client.db("courseDatabase").collection("programDetails");
+  
+  const programDetails = client.db("courseDatabase").collection("programDetails");
+  const couponDetails = client.db("courseDatabase").collection("couponDetails");
 
 app.post("/add-program", async (req, res) => {
   try {
@@ -598,6 +599,21 @@ app.get("/exerciseSearch", async (req, res) => {
         message: "Server internal error",
       });
     }
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+
+app.post("/coupon-details", async (req, res) => {
+  try {
+    const couponDetailsFromUI = req.body;
+    console.log("couponDetails: ", couponDetailsFromUI);
+    const result = await couponDetails.insertOne(couponDetailsFromUI);
+    res.send(result);
   } catch (error) {
     res.send({
       success: false,
