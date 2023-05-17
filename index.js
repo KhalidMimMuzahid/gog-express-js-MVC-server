@@ -51,6 +51,17 @@ const assesmentResponseData = client
   const programDetails = client.db("courseDatabase").collection("programDetails");
   const couponDetails = client.db("courseDatabase").collection("couponDetails");
 
+
+app.get("/all-program", async (req, res) => {
+  try{
+    const query = {};
+    const allProgram = await programDetails.find(query).toArray();
+    res.send({data: allProgram})
+  }catch{
+    res.send({data: []})
+  }
+})
+
 app.post("/add-program", async (req, res) => {
   try {
     const program = req?.body;
