@@ -633,6 +633,16 @@ app.post("/coupon-details", async (req, res) => {
   }
 });
 
+app.get("/all-coupons", async (req, res) => {
+  try{
+    const query = {};
+    const allCoupon = await couponDetails.find(query).toArray();
+    res.send({data: allCoupon})
+  }catch{
+    res.send({data: []})
+  }
+})
+
 // Amit server code
 
 app.get("/", async (req, res) => {
