@@ -55,7 +55,6 @@ const assesmentResponseData = client
 const programDetails = client.db("courseDatabase").collection("programDetails");
 const couponDetails = client.db("courseDatabase").collection("couponDetails");
 
-
 app.get("/all-program", async (req, res) => {
   try {
     const query = {};
@@ -76,7 +75,6 @@ app.get("/all-courses-by-program", async (req, res) => {
     res.send({ data: [] });
   }
 });
-
 
 app.post("/add-program", async (req, res) => {
   try {
@@ -701,18 +699,18 @@ app.post("/assignmentDetails", async (req, res) => {
 app.post("/exerciseDetails", async (req, res) => {
   try {
     const exercise = req.body;
-    // console.log(exercise) 
+    // console.log(exercise)
     const result = await exerciseCollection.insertOne(exercise);
     console.log("result: ", result);
     if (result?.acknowledged) {
       res.send({
-        success: true, 
+        success: true,
         data: result,
         message: "Exercise Successful Added",
       });
     } else {
       res.send({
-        success: false, 
+        success: false,
         message: "Server internal error",
       });
     }
@@ -724,37 +722,35 @@ app.post("/exerciseDetails", async (req, res) => {
   }
 });
 
-app.get('/exerciseSearch', async (req, res) => {
-  try{ 
-    const queers = JSON.parse(req?.headers?.data);   
-    const queryTemp = queers? {...queers} : {};
-    const query = {}
-    if(queryTemp !== {}){
-      const dataKeys = Object.keys(queryTemp)
-    dataKeys.forEach(key => {
-      if(queryTemp[key]){
-        query[key] = queryTemp[key];
-      }
-    })
+app.get("/exerciseSearch", async (req, res) => {
+  try {
+    const queers = JSON.parse(req?.headers?.data);
+    const queryTemp = queers ? { ...queers } : {};
+    const query = {};
+    if (queryTemp !== {}) {
+      const dataKeys = Object.keys(queryTemp);
+      dataKeys.forEach((key) => {
+        if (queryTemp[key]) {
+          query[key] = queryTemp[key];
+        }
+      });
     }
 
     // console.log(query)
-  const data = await exerciseCollection.find(query).toArray();
-    if(data?.length > 0){
+    const data = await exerciseCollection.find(query).toArray();
+    if (data?.length > 0) {
       res?.send({
         success: true,
         data: data,
         message: "Exercise found successfully",
-      }
-      ) 
-      
-    }else{
+      });
+    } else {
       res?.send({
         success: false,
         message: "Server internal error",
       });
     }
-  }catch (error) {
+  } catch (error) {
     res?.send({
       success: false,
       error: error.message,
@@ -762,41 +758,36 @@ app.get('/exerciseSearch', async (req, res) => {
   }
 });
 
+// search assignment
 
-
-
-// search assignment 
-
-app.get('/searchAssignment', async (req, res) => {
-  try{ 
-    const queers = JSON.parse(req?.headers?.data);   
-    console.log(queers)
-    const queryTemp = queers? {...queers} : {};
-    const query = {}
-    const dataKeys = Object.keys(queryTemp)
-    dataKeys.forEach(key => {
-      if(queryTemp[key]){
+app.get("/searchAssignment", async (req, res) => {
+  try {
+    const queers = JSON.parse(req?.headers?.data);
+    console.log(queers);
+    const queryTemp = queers ? { ...queers } : {};
+    const query = {};
+    const dataKeys = Object.keys(queryTemp);
+    dataKeys.forEach((key) => {
+      if (queryTemp[key]) {
         query[key] = queryTemp[key];
       }
-    })
+    });
 
     // console.log(query)
-  const data = await assignmentDetails.find(query).toArray();
-    if(data?.length > 0){
+    const data = await assignmentDetails.find(query).toArray();
+    if (data?.length > 0) {
       res?.send({
         success: true,
         data: data,
         message: "Assignment found successfully",
-      }
-      ) 
-      
-    }else{
+      });
+    } else {
       res?.send({
         success: false,
         message: "Server internal error",
       });
     }
-  }catch (error) {
+  } catch (error) {
     res?.send({
       success: false,
       error: error.message,
@@ -804,36 +795,34 @@ app.get('/searchAssignment', async (req, res) => {
   }
 });
 
-+
-
-
-//add Lecture 
-    app.post('/lectureDetails', async(req, res)=>{
-      try{
-        const lecture = req.body;   
-        console.log(lecture);
-        const result = await lectureCollection.insertOne(lecture);
-        console.log("result: ", result);
-        if(result?.acknowledged){
-          res.send({
-            success: true,
-            data: result,
-            message: "Lecture Successful Added",
-          })
-        }else{
-          res.send({
-            success: false,
-            message: "Server internal error",
-          });
-        }
-      }catch (error) {
++(
+  //add Lecture
+  app.post("/lectureDetails", async (req, res) => {
+    try {
+      const lecture = req.body;
+      console.log(lecture);
+      const result = await lectureCollection.insertOne(lecture);
+      console.log("result: ", result);
+      if (result?.acknowledged) {
+        res.send({
+          success: true,
+          data: result,
+          message: "Lecture Successful Added",
+        });
+      } else {
         res.send({
           success: false,
-          error: error.message,
+          message: "Server internal error",
         });
       }
-    })
-
+    } catch (error) {
+      res.send({
+        success: false,
+        error: error.message,
+      });
+    }
+  })
+);
 
 app.post("/coupon-details", async (req, res) => {
   try {
@@ -849,52 +838,49 @@ app.post("/coupon-details", async (req, res) => {
   }
 });
 
-
-
 // coupons search
-app.get('/all-coupons', async (req, res) => {
-  try{
+app.get("/all-coupons", async (req, res) => {
+  try {
     const queers = JSON.parse(req?.headers?.data);
     // console.log(queers)
-    const queryTemp = queers? {...queers} : {};
-    let query = {}
-    const dataKeys = Object.keys(queryTemp)
-    dataKeys.forEach(key => {
-      if(queryTemp[key]){
+    const queryTemp = queers ? { ...queers } : {};
+    let query = {};
+    const dataKeys = Object.keys(queryTemp);
+    dataKeys.forEach((key) => {
+      if (queryTemp[key]) {
         query[key] = queryTemp[key];
       }
-    })
-    if(query?.creatorEmail && query?.updaterEmail){
-      query ={
-        'actionsDetails.creation.creatorEmail': query?.creatorEmail,
-        'actionsDetails.updation.updaterEmail': query?.updaterEmail
-      }
-    }
-    else if(query?.creatorEmail){
+    });
+    if (query?.creatorEmail && query?.updaterEmail) {
       query = {
-        'actionsDetails.creation.creatorEmail': query?.creatorEmail,
-      }
-    }else if(query?.updaterEmail){
-      query ={
-        'actionsDetails.updation.updaterEmail': query?.updaterEmail
-      }
+        "actionsDetails.creation.creatorEmail": query?.creatorEmail,
+        "actionsDetails.updation.updaterEmail": query?.updaterEmail,
+      };
+    } else if (query?.creatorEmail) {
+      query = {
+        "actionsDetails.creation.creatorEmail": query?.creatorEmail,
+      };
+    } else if (query?.updaterEmail) {
+      query = {
+        "actionsDetails.updation.updaterEmail": query?.updaterEmail,
+      };
     }
-    // console.log(query)
-  const data = await couponDetails.find(query).toArray();
-    if(data?.length > 0){
+    // console.log(query);
+    const data = await couponDetails.find(query).toArray();
+    if (data?.length > 0) {
       res?.send({
         success: true,
         data: data,
         message: "Assignment found successfully",
-      }
-      )
-    }else{
+      });
+    } else {
       res?.send({
-        success: false,
-        message: "Server internal error",
+        success: true,
+        data: data,
+        message: "No coupons found",
       });
     }
-  }catch (error) {
+  } catch (error) {
     res?.send({
       success: false,
       error: error.message,
@@ -902,41 +888,39 @@ app.get('/all-coupons', async (req, res) => {
   }
 });
 //all programs and search
-app.get('/program-list', async (req, res) => {
-  try{
+app.get("/program-list", async (req, res) => {
+  try {
     const queers = JSON.parse(req?.headers?.data);
-    console.log(queers)
-    const queryTemp = queers? {...queers} : {};
-    const query = {}
-    const dataKeys = Object.keys(queryTemp)
-    dataKeys.forEach(key => {
-      if(queryTemp[key]){
+    console.log(queers);
+    const queryTemp = queers ? { ...queers } : {};
+    const query = {};
+    const dataKeys = Object.keys(queryTemp);
+    dataKeys.forEach((key) => {
+      if (queryTemp[key]) {
         query[key] = queryTemp[key];
       }
-    })
-    console.log(query)
-  const data = await programDetails.find(query).toArray();
-    if(data?.length > 0){
+    });
+    console.log(query);
+    const data = await programDetails.find(query).toArray();
+    if (data?.length > 0) {
       res?.send({
         success: true,
         data: data,
         message: "Assignment found successfully",
-      }
-      )
-    }else{
+      });
+    } else {
       res?.send({
         success: false,
         message: "Server internal error",
       });
     }
-  }catch (error) {
+  } catch (error) {
     res?.send({
       success: false,
       error: error.message,
     });
   }
 });
-
 
 // Amit server code
 
@@ -946,4 +930,4 @@ app.get("/", async (req, res) => {
 
 app.listen(port, () =>
   console.log(`Geeks of Gurukul Server running on ${port}`)
-); 
+);
