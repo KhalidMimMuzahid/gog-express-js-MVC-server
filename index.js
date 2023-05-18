@@ -47,20 +47,30 @@ const assesmentData = client.db("questionsBank").collection("assesmentData");
 const assesmentResponseData = client
   .db("examsReponse")
   .collection("assesmentResponseData");
-  
-  const programDetails = client.db("courseDatabase").collection("programDetails");
-  const couponDetails = client.db("courseDatabase").collection("couponDetails");
 
+const programDetails = client.db("courseDatabase").collection("programDetails");
+const couponDetails = client.db("courseDatabase").collection("couponDetails");
 
 app.get("/all-program", async (req, res) => {
-  try{
+  try {
     const query = {};
     const allProgram = await programDetails.find(query).toArray();
-    res.send({data: allProgram})
-  }catch{
-    res.send({data: []})
+    res.send({ data: allProgram });
+  } catch {
+    res.send({ data: [] });
   }
-})
+});
+app.get("/all-courses-by-program", async (req, res) => {
+  try {
+    const _id = req.query._id;
+
+    const query = { "program.program_id": _id };
+    const courses = await courseDetails.find(query).toArray();
+    res.send({ data: courses });
+  } catch {
+    res.send({ data: [] });
+  }
+});
 
 app.post("/add-program", async (req, res) => {
   try {
@@ -95,7 +105,8 @@ app.post("/add-program", async (req, res) => {
       if (isAlreadyExists) {
         res.send({
           success: false,
-          message: "this program Name is already exists",
+          message:
+            "this program Name is already exists, \nprogram name must be unique.",
         });
       } else {
         const result = await programDetails.insertOne(program);
@@ -443,32 +454,145 @@ app.get("/assessment-responses", async (req, res) => {
 });
 
 // LMS API
-// for adding batch(post)
-app.post("/add-batch", async (req, res) => {
-  try {
-    const batch = req.body;
-    const result = await batchDetails.insertOne(batch);
-    console.log("result: ", result);
-    res.send(result);
-  } catch (error) {
-    res.send({
-      success: false,
-      error: error.message,
-    });
-  }
-});
 
 // for adding course(post)
 app.post("/add-course", async (req, res) => {
   try {
     const course = req.body;
-    const result = await courseDetails.insertOne(course);
-    console.log("result: ", result);
-    res.send(result);
+    const query = {};
+    const allData = await courseDetails.find(query).toArray();
+
+    if (!allData?.length) {
+      const result = await courseDetails.insertOne(course);
+      if (result?.acknowledged) {
+        res.send({ success: true, message: "course successfully added." });
+      } else {
+        res.send({
+          success: false,
+          message: "something went wrong, please try again.",
+        });
+      }
+    } else {
+      //to do
+      // check the course data exist or not
+      let isAlreadyExists = false;
+      allData.forEach((each) => {
+        if (
+          each?.courseName?.toLowerCase() === course?.courseName?.toLowerCase()
+        ) {
+          isAlreadyExists = true;
+          return;
+        }
+      });
+      if (isAlreadyExists) {
+        res.send({
+          success: false,
+          message:
+            "this Course Name is already exists,\ncourse name must be unique",
+        });
+      } else {
+        const result = await courseDetails.insertOne(course);
+        if (result?.acknowledged) {
+          res.send({ success: true, message: "course successfully added." });
+        } else {
+          res.send({
+            success: false,
+            message: "something went wrong, please try again.",
+          });
+        }
+      }
+    }
   } catch (error) {
     res.send({
       success: false,
-      error: error.message,
+      message: error.message,
+    });
+  }
+});
+app.post("/add-batch", async (req, res) => {
+  try {
+    const batch = req.body;
+    // console.log("batch: ", batch);
+    console.log("batch?.batchName: ", batch?.batchName);
+    const query = {};
+    const allData = await batchDetails.find(query).toArray();
+
+    if (!allData?.length) {
+      const result = await batchDetails.insertOne(batch);
+      if (result?.acknowledged) {
+        // console.log("xxxxxxxxxxx", result);
+        const filter = { _id: new ObjectId(batch?.course?.course_id) };
+        const updateDoc = {
+          $set: {
+            currentBatch: batch?.batchName,
+          },
+        };
+        const result2 = await courseDetails.updateOne(filter, updateDoc);
+        console.log("xxxxxxxx: ", result2);
+        if (result2?.modifiedCount) {
+          res.send({ success: true, message: "batch successfully added." });
+        } else {
+          res.send({
+            success: false,
+            message: "something went wrong, please try again.",
+          });
+        }
+      } else {
+        res.send({
+          success: false,
+          message: "something went wrong, please try again.",
+        });
+      }
+    } else {
+      //to do
+      // check the course data exist or not
+      let isAlreadyExists = false;
+      allData.forEach((each) => {
+        if (
+          each?.batchName?.toLowerCase() === batch?.batchName?.toLowerCase()
+        ) {
+          isAlreadyExists = true;
+          return;
+        }
+      });
+      if (isAlreadyExists) {
+        res.send({
+          success: false,
+          message: "this Batch is already exists,\nbatch name must be unique",
+        });
+      } else {
+        // to do:  we need to check here that the bacname is already exists or not
+
+        const result3 = await batchDetails.insertOne(batch);
+        if (result3?.acknowledged) {
+          const filter = { _id: new ObjectId(batch?.course?.course_id) };
+          const updateDoc = {
+            $set: {
+              currentBatch: batch?.batchName,
+            },
+          };
+          const result2 = await courseDetails.updateOne(filter, updateDoc);
+          console.log("result2", result2);
+          if (result2?.modifiedCount) {
+            res.send({ success: true, message: "batch successfully added." });
+          } else {
+            res.send({
+              success: false,
+              message: "something went wrong, please try again.ccccccc",
+            });
+          }
+        } else {
+          res.send({
+            success: false,
+            message: "something went wrong, please try again.",
+          });
+        }
+      }
+    }
+  } catch (error) {
+    res.send({
+      success: false,
+      message: error.message,
     });
   }
 });
@@ -617,7 +741,6 @@ app.get("/exerciseSearch", async (req, res) => {
     });
   }
 });
-
 
 app.post("/coupon-details", async (req, res) => {
   try {
