@@ -842,7 +842,7 @@ app.post("/coupon-details", async (req, res) => {
 app.get("/all-coupons", async (req, res) => {
   try {
     const queers = JSON.parse(req?.headers?.data);
-    // console.log(queers)
+    console.log(queers)
     const queryTemp = queers ? { ...queers } : {};
     let query = {};
     const dataKeys = Object.keys(queryTemp);
@@ -866,6 +866,13 @@ app.get("/all-coupons", async (req, res) => {
       };
     }
     // console.log(query);
+    if (queers.couponLabel) {
+      query = {
+        ...query,
+        "couponLabel":queers.couponLabel
+      }
+    }
+    console.log(query);
     const data = await couponDetails.find(query).toArray();
     if (data?.length > 0) {
       res?.send({
