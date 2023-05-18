@@ -35,8 +35,11 @@ const exerciseCollection = client
 const lectureCollection = client
   .db("courseDatabase")
   .collection("LectureDetails");
-//BatchCollection
+//BatchCollection 
 const batchDetails = client.db("batchDatabase").collection("batchDetails");
+
+//coupon collection
+const couponDetails = client.db("courseDatabase").collection("couponDetails");
 
 const userBasicCollection = client
   .db("users")
