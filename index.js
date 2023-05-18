@@ -5,6 +5,7 @@ const moment = require("moment");
 // const jwt = require('jsonwebtoken');
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const e = require("express");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 
@@ -34,9 +35,13 @@ const exerciseCollection = client
 // Collection
 const lectureCollection = client
   .db("courseDatabase")
-  .collection("LectureDetails");
+  .collection("LectureDetails"); 
+  
 //BatchCollection 
-const batchDetails = client.db("batchDatabase").collection("batchDetails");
+const batchDetails = client.db("batchDatabase").collection("batchDetails"); 
+
+//BatchCollection
+const batchDetails = client.db("courseDatabase").collection("batchDetails");
 
 //coupon collection
 const couponDetails = client.db("courseDatabase").collection("couponDetails");
@@ -53,6 +58,86 @@ const assesmentData = client.db("questionsBank").collection("assesmentData");
 const assesmentResponseData = client
   .db("examsReponse")
   .collection("assesmentResponseData");
+
+const programDetails = client.db("courseDatabase").collection("programDetails");
+const couponDetails = client.db("courseDatabase").collection("couponDetails");
+
+app.get("/all-program", async (req, res) => {
+  try {
+    const query = {};
+    const allProgram = await programDetails.find(query).toArray();
+    res.send({ data: allProgram });
+  } catch {
+    res.send({ data: [] });
+  }
+});
+app.get("/all-courses-by-program", async (req, res) => {
+  try {
+    const _id = req.query._id;
+
+    const query = { "program.program_id": _id };
+    const courses = await courseDetails.find(query).toArray();
+    res.send({ data: courses });
+  } catch {
+    res.send({ data: [] });
+  }
+});
+
+app.post("/add-program", async (req, res) => {
+  try {
+    const program = req?.body;
+    //console.log("program", program);
+    const query = {};
+    const allData = await programDetails.find(query).toArray();
+    //console.log("hiii", allData);
+    if (!allData?.length) {
+      const result = await programDetails.insertOne(program);
+      if (result?.acknowledged) {
+        res.send({ success: true, message: "program successfully added." });
+      } else {
+        res.send({
+          success: false,
+          message: "something went wrong, please try again.",
+        });
+      }
+    } else {
+      //to do
+      // check the program data exist or not
+      let isAlreadyExists = false;
+      allData.forEach((each) => {
+        if (
+          each?.programName?.toLowerCase() ===
+          program?.programName?.toLowerCase()
+        ) {
+          isAlreadyExists = true;
+          return;
+        }
+      });
+      if (isAlreadyExists) {
+        res.send({
+          success: false,
+          message:
+            "this program Name is already exists, \nprogram name must be unique.",
+        });
+      } else {
+        const result = await programDetails.insertOne(program);
+        if (result?.acknowledged) {
+          res.send({ success: true, message: "program successfully added." });
+        } else {
+          res.send({
+            success: false,
+            message: "something went wrong, please try again.",
+          });
+        }
+      }
+    }
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
 
 app.get("/checkuseralreadyindatabase", async (req, res) => {
   try {
@@ -380,32 +465,145 @@ app.get("/assessment-responses", async (req, res) => {
 });
 
 // LMS API
-// for adding batch(post)
-app.post("/add-batch", async (req, res) => {
-  try {
-    const batch = req.body;
-    const result = await batchDetails.insertOne(batch);
-    console.log("result: ", result);
-    res.send(result);
-  } catch (error) {
-    res.send({
-      success: false,
-      error: error.message,
-    });
-  }
-});
 
 // for adding course(post)
 app.post("/add-course", async (req, res) => {
   try {
     const course = req.body;
-    const result = await courseDetails.insertOne(course);
-    console.log("result: ", result);
-    res.send(result);
+    const query = {};
+    const allData = await courseDetails.find(query).toArray();
+
+    if (!allData?.length) {
+      const result = await courseDetails.insertOne(course);
+      if (result?.acknowledged) {
+        res.send({ success: true, message: "course successfully added." });
+      } else {
+        res.send({
+          success: false,
+          message: "something went wrong, please try again.",
+        });
+      }
+    } else {
+      //to do
+      // check the course data exist or not
+      let isAlreadyExists = false;
+      allData.forEach((each) => {
+        if (
+          each?.courseName?.toLowerCase() === course?.courseName?.toLowerCase()
+        ) {
+          isAlreadyExists = true;
+          return;
+        }
+      });
+      if (isAlreadyExists) {
+        res.send({
+          success: false,
+          message:
+            "this Course Name is already exists,\ncourse name must be unique",
+        });
+      } else {
+        const result = await courseDetails.insertOne(course);
+        if (result?.acknowledged) {
+          res.send({ success: true, message: "course successfully added." });
+        } else {
+          res.send({
+            success: false,
+            message: "something went wrong, please try again.",
+          });
+        }
+      }
+    }
   } catch (error) {
     res.send({
       success: false,
-      error: error.message,
+      message: error.message,
+    });
+  }
+});
+app.post("/add-batch", async (req, res) => {
+  try {
+    const batch = req.body;
+    // console.log("batch: ", batch);
+    console.log("batch?.batchName: ", batch?.batchName);
+    const query = {};
+    const allData = await batchDetails.find(query).toArray();
+
+    if (!allData?.length) {
+      const result = await batchDetails.insertOne(batch);
+      if (result?.acknowledged) {
+        // console.log("xxxxxxxxxxx", result);
+        const filter = { _id: new ObjectId(batch?.course?.course_id) };
+        const updateDoc = {
+          $set: {
+            currentBatch: batch?.batchName,
+          },
+        };
+        const result2 = await courseDetails.updateOne(filter, updateDoc);
+        console.log("xxxxxxxx: ", result2);
+        if (result2?.modifiedCount) {
+          res.send({ success: true, message: "batch successfully added." });
+        } else {
+          res.send({
+            success: false,
+            message: "something went wrong, please try again.",
+          });
+        }
+      } else {
+        res.send({
+          success: false,
+          message: "something went wrong, please try again.",
+        });
+      }
+    } else {
+      //to do
+      // check the course data exist or not
+      let isAlreadyExists = false;
+      allData.forEach((each) => {
+        if (
+          each?.batchName?.toLowerCase() === batch?.batchName?.toLowerCase()
+        ) {
+          isAlreadyExists = true;
+          return;
+        }
+      });
+      if (isAlreadyExists) {
+        res.send({
+          success: false,
+          message: "this Batch is already exists,\nbatch name must be unique",
+        });
+      } else {
+        // to do:  we need to check here that the bacname is already exists or not
+
+        const result3 = await batchDetails.insertOne(batch);
+        if (result3?.acknowledged) {
+          const filter = { _id: new ObjectId(batch?.course?.course_id) };
+          const updateDoc = {
+            $set: {
+              currentBatch: batch?.batchName,
+            },
+          };
+          const result2 = await courseDetails.updateOne(filter, updateDoc);
+          console.log("result2", result2);
+          if (result2?.modifiedCount) {
+            res.send({ success: true, message: "batch successfully added." });
+          } else {
+            res.send({
+              success: false,
+              message: "something went wrong, please try again.ccccccc",
+            });
+          }
+        } else {
+          res.send({
+            success: false,
+            message: "something went wrong, please try again.",
+          });
+        }
+      }
+    }
+  } catch (error) {
+    res.send({
+      success: false,
+      message: error.message,
     });
   }
 });
@@ -508,18 +706,18 @@ app.post("/assignmentDetails", async (req, res) => {
 app.post("/exerciseDetails", async (req, res) => {
   try {
     const exercise = req.body;
-    // console.log(exercise) 
+    // console.log(exercise)
     const result = await exerciseCollection.insertOne(exercise);
     console.log("result: ", result);
     if (result?.acknowledged) {
       res.send({
-        success: true, 
+        success: true,
         data: result,
         message: "Exercise Successful Added",
       });
     } else {
       res.send({
-        success: false, 
+        success: false,
         message: "Server internal error",
       });
     }
@@ -531,37 +729,35 @@ app.post("/exerciseDetails", async (req, res) => {
   }
 });
 
-app.get('/exerciseSearch', async (req, res) => {
-  try{ 
-    const queers = JSON.parse(req?.headers?.data);   
-    const queryTemp = queers? {...queers} : {};
-    const query = {}
-    if(queryTemp !== {}){
-      const dataKeys = Object.keys(queryTemp)
-    dataKeys.forEach(key => {
-      if(queryTemp[key]){
-        query[key] = queryTemp[key];
-      }
-    })
+app.get("/exerciseSearch", async (req, res) => {
+  try {
+    const queers = JSON.parse(req?.headers?.data);
+    const queryTemp = queers ? { ...queers } : {};
+    const query = {};
+    if (queryTemp !== {}) {
+      const dataKeys = Object.keys(queryTemp);
+      dataKeys.forEach((key) => {
+        if (queryTemp[key]) {
+          query[key] = queryTemp[key];
+        }
+      });
     }
 
     // console.log(query)
-  const data = await exerciseCollection.find(query).toArray();
-    if(data?.length > 0){
+    const data = await exerciseCollection.find(query).toArray();
+    if (data?.length > 0) {
       res?.send({
         success: true,
         data: data,
         message: "Exercise found successfully",
-      }
-      ) 
-      
-    }else{
+      });
+    } else {
       res?.send({
         success: false,
         message: "Server internal error",
       });
     }
-  }catch (error) {
+  } catch (error) {
     res?.send({
       success: false,
       error: error.message,
@@ -569,41 +765,36 @@ app.get('/exerciseSearch', async (req, res) => {
   }
 });
 
+// search assignment
 
-
-
-// search assignment 
-
-app.get('/searchAssignment', async (req, res) => {
-  try{ 
-    const queers = JSON.parse(req?.headers?.data);   
-    console.log(queers)
-    const queryTemp = queers? {...queers} : {};
-    const query = {}
-    const dataKeys = Object.keys(queryTemp)
-    dataKeys.forEach(key => {
-      if(queryTemp[key]){
+app.get("/searchAssignment", async (req, res) => {
+  try {
+    const queers = JSON.parse(req?.headers?.data);
+    console.log(queers);
+    const queryTemp = queers ? { ...queers } : {};
+    const query = {};
+    const dataKeys = Object.keys(queryTemp);
+    dataKeys.forEach((key) => {
+      if (queryTemp[key]) {
         query[key] = queryTemp[key];
       }
-    })
+    });
 
     // console.log(query)
-  const data = await assignmentDetails.find(query).toArray();
-    if(data?.length > 0){
+    const data = await assignmentDetails.find(query).toArray();
+    if (data?.length > 0) {
       res?.send({
         success: true,
         data: data,
         message: "Assignment found successfully",
-      }
-      ) 
-      
-    }else{
+      });
+    } else {
       res?.send({
         success: false,
         message: "Server internal error",
       });
     }
-  }catch (error) {
+  } catch (error) {
     res?.send({
       success: false,
       error: error.message,
@@ -611,36 +802,139 @@ app.get('/searchAssignment', async (req, res) => {
   }
 });
 
-
-
-
-//add Lecture 
-    app.post('/lectureDetails', async(req, res)=>{
-      try{
-        const lecture = req.body;   
-        console.log(lecture);
-        const result = await lectureCollection.insertOne(lecture);
-        console.log("result: ", result);
-        if(result?.acknowledged){
-          res.send({
-            success: true,
-            data: result,
-            message: "Lecture Successful Added",
-          })
-        }else{
-          res.send({
-            success: false,
-            message: "Server internal error",
-          });
-        }
-      }catch (error) {
++(
+  //add Lecture
+  app.post("/lectureDetails", async (req, res) => {
+    try {
+      const lecture = req.body;
+      console.log(lecture);
+      const result = await lectureCollection.insertOne(lecture);
+      console.log("result: ", result);
+      if (result?.acknowledged) {
+        res.send({
+          success: true,
+          data: result,
+          message: "Lecture Successful Added",
+        });
+      } else {
         res.send({
           success: false,
-          error: error.message,
+          message: "Server internal error",
         });
       }
-    })
+    } catch (error) {
+      res.send({
+        success: false,
+        error: error.message,
+      });
+    }
+  })
+);
 
+app.post("/coupon-details", async (req, res) => {
+  try {
+    const couponDetailsFromUI = req.body;
+    console.log("couponDetails: ", couponDetailsFromUI);
+    const result = await couponDetails.insertOne(couponDetailsFromUI);
+    res.send(result);
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// coupons search
+app.get("/all-coupons", async (req, res) => {
+  try {
+    const queers = JSON.parse(req?.headers?.data);
+    console.log(queers)
+    const queryTemp = queers ? { ...queers } : {};
+    let query = {};
+    const dataKeys = Object.keys(queryTemp);
+    dataKeys.forEach((key) => {
+      if (queryTemp[key]) {
+        query[key] = queryTemp[key];
+      }
+    });
+    if (query?.creatorEmail && query?.updaterEmail) {
+      query = {
+        "actionsDetails.creation.creatorEmail": query?.creatorEmail,
+        "actionsDetails.updation.updaterEmail": query?.updaterEmail,
+      };
+    } else if (query?.creatorEmail) {
+      query = {
+        "actionsDetails.creation.creatorEmail": query?.creatorEmail,
+      };
+    } else if (query?.updaterEmail) {
+      query = {
+        "actionsDetails.updation.updaterEmail": query?.updaterEmail,
+      };
+    }
+    // console.log(query);
+    if (queers.couponLabel) {
+      query = {
+        ...query,
+        "couponLabel":queers.couponLabel
+      }
+    }
+    console.log(query);
+    const data = await couponDetails.find(query).toArray();
+    if (data?.length > 0) {
+      res?.send({
+        success: true,
+        data: data,
+        message: "Assignment found successfully",
+      });
+    } else {
+      res?.send({
+        success: true,
+        data: data,
+        message: "No coupons found",
+      });
+    }
+  } catch (error) {
+    res?.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+//all programs and search
+app.get("/program-list", async (req, res) => {
+  try {
+    const queers = JSON.parse(req?.headers?.data);
+    console.log(queers);
+    const queryTemp = queers ? { ...queers } : {};
+    const query = {};
+    const dataKeys = Object.keys(queryTemp);
+    dataKeys.forEach((key) => {
+      if (queryTemp[key]) {
+        query[key] = queryTemp[key];
+      }
+    });
+    console.log(query);
+    const data = await programDetails.find(query).toArray();
+    if (data?.length > 0) {
+      res?.send({
+        success: true,
+        data: data,
+        message: "Assignment found successfully",
+      });
+    } else {
+      res?.send({
+        success: false,
+        message: "Server internal error",
+      });
+    }
+  } catch (error) {
+    res?.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
 
 // Amit server code
 
@@ -650,4 +944,4 @@ app.get("/", async (req, res) => {
 
 app.listen(port, () =>
   console.log(`Geeks of Gurukul Server running on ${port}`)
-); 
+);
