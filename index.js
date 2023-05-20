@@ -63,19 +63,19 @@ app.get("/all-program", async (req, res) => {
   } catch {
     res.send({ data: [] });
   }
-});
+})
 app.get("/all-courses-by-program", async (req, res) => {
   try {
     const _id = req.query._id;
 
     const query = { "program.program_id": _id };
     const courses = await courseDetails.find(query).toArray();
+    console.log(courses);
     res.send({ data: courses });
   } catch {
     res.send({ data: [] });
   }
 });
-
 app.post("/add-program", async (req, res) => {
   try {
     const program = req?.body;
