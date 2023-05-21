@@ -15,6 +15,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const stripe = require("stripe")(process.env.STRIPE_SK);
+
 const uri = process.env.MONGO_URL;
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
@@ -24,6 +26,10 @@ const client = new MongoClient(uri, {
 
 // courseCollection
 const courseDetails = client.db("courseDatabase").collection("courseDetails");
+
+const coursePurchaseDetails = client
+  .db("courseDatabase")
+  .collection("coursePurchaseDetails");
 //assignment Collection
 const assignmentDetails = client
   .db("courseDatabase")
@@ -63,14 +69,14 @@ app.get("/all-program", async (req, res) => {
   } catch {
     res.send({ data: [] });
   }
-})
+});
 app.get("/all-courses-by-program", async (req, res) => {
   try {
     const _id = req.query._id;
 
     const query = { "program.program_id": _id };
     const courses = await courseDetails.find(query).toArray();
-    console.log(courses);
+    ////console.log(courses);
     res.send({ data: courses });
   } catch {
     res.send({ data: [] });
@@ -79,10 +85,10 @@ app.get("/all-courses-by-program", async (req, res) => {
 app.post("/add-program", async (req, res) => {
   try {
     const program = req?.body;
-    //console.log("program", program);
+    ////console.log("program", program);
     const query = {};
     const allData = await programDetails.find(query).toArray();
-    //console.log("hiii", allData);
+    ////console.log("hiii", allData);
     if (!allData?.length) {
       const result = await programDetails.insertOne(program);
       if (result?.acknowledged) {
@@ -135,10 +141,10 @@ app.post("/add-program", async (req, res) => {
 app.get("/checkuseralreadyindatabase", async (req, res) => {
   try {
     const email = req?.query?.email;
-    console.log("email: ", email);
+    ////console.log("email: ", email);
     const query = { email: email };
     const result = await userBasicCollection.findOne(query);
-    console.log("result check: ", result);
+    ////console.log("result check: ", result);
     if (result) {
       res.send({ isUserAlreadyExists: true });
     } else {
@@ -156,10 +162,10 @@ app.get("/checkphonealreadyinused/:number", async (req, res) => {
   try {
     // const number = req?.query?.number;
     const number = req?.params?.number;
-    console.log("number: ", number);
+    ////console.log("number: ", number);
     const query = { phoneNumber: number };
     const result = await userBasicCollection.findOne(query);
-    console.log("result check: ", result);
+    ////console.log("result check: ", result);
     if (result) {
       res.send({ isNumberAlreadyExists: true });
     } else {
@@ -177,10 +183,10 @@ app.get("/checkphonealreadyinused/:number", async (req, res) => {
 app.get("/checkuserphoneverified", async (req, res) => {
   try {
     const email = req?.query?.email;
-    console.log("email: ", email);
+    ////console.log("email: ", email);
     const query = { email: email };
     const result = await userBasicCollection.findOne(query);
-    console.log("result check: ", result);
+    ////console.log("result check: ", result);
     if (result?.phoneNumber) {
       res.send({ isPhoneVerified: true });
     } else {
@@ -198,7 +204,7 @@ app.get("/checkuserphoneverified", async (req, res) => {
 app.post("/usersbasics", async (req, res) => {
   try {
     const userBasicDetails = req.body;
-    console.log("userBasicDetails: ", userBasicDetails);
+    ////console.log("userBasicDetails: ", userBasicDetails);
     const result = await userBasicCollection.insertOne(userBasicDetails);
     res.send(result);
   } catch (error) {
@@ -211,7 +217,7 @@ app.post("/usersbasics", async (req, res) => {
 app.post("/user-details", async (req, res) => {
   try {
     const userDetails = req.body;
-    console.log("userDetails: ", userDetails);
+    ////console.log("userDetails: ", userDetails);
     const result = await userDetailsCollection.insertOne(userDetails);
     res.send(result);
   } catch (error) {
@@ -269,12 +275,97 @@ app.put("/just-created-false", async (req, res) => {
 app.get("/userinfo/:email", async (req, res) => {
   try {
     const email = req.params.email;
-    console.log(email);
+    //console.log(email);
     const query = { email };
 
-    console.log(query);
+    //console.log(query);
     const user = await userBasicCollection.findOne(query);
     res.send(user);
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+app.get("/batch", async (req, res) => {
+  try {
+    const batchName = req?.query?.batchName;
+    const query = { batchName };
+
+    const options = {
+      projection: { _id: 1, batchName: 1 },
+    };
+    const result = await batchDetails.findOne(query, options);
+    res.send(result);
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+app.post("/enroll-course", async (req, res) => {
+  try {
+    const coursePurchaseDetailsInfo = req.body;
+    ////console.log("coursePurchaseDetails: ", coursePurchaseDetails);
+
+    const query = {
+      "program.program_id": coursePurchaseDetailsInfo?.program?.program_id,
+      "course.course_id": coursePurchaseDetailsInfo?.course?.course_id,
+      "batch.batch_id": coursePurchaseDetailsInfo?.batch?.batch_id,
+      "purchaseInfo.purchaseByEmail":
+        coursePurchaseDetailsInfo?.purchaseInfo?.purchaseByEmail,
+    };
+    const result = await coursePurchaseDetails.findOne(query);
+    ////console.log("result: ", result);
+    //res.send(result);
+    if (result?._id) {
+      if (result?.isPaid) {
+        // to do
+        res.send({
+          success: false,
+          error: `you have already purchased this course in this batch ${coursePurchaseDetailsInfo?.batch?.batchName}`,
+        });
+      } else {
+        res.send({
+          success: true,
+          message: "course successfully enrolled",
+          data: result,
+        });
+      }
+    } else {
+      // to do
+      const result2 = await coursePurchaseDetails.insertOne(
+        coursePurchaseDetailsInfo
+      );
+      if (result2) {
+        res.send({
+          success: true,
+          message: "course successfully enrolled",
+          data: result2,
+        });
+      } else {
+        res.send({
+          success: false,
+          error: "server internal error",
+        });
+      }
+    }
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+app.get("/enroll-course-info", async (req, res) => {
+  try {
+    const _id = req?.query?._id;
+    const query = { _id: new ObjectId(_id) };
+    const result = await coursePurchaseDetails.findOne(query);
+    res.send(result);
   } catch (error) {
     res.send({
       success: false,
@@ -286,10 +377,10 @@ app.get("/userinfo/:email", async (req, res) => {
 app.post("/add-csv-data", async (req, res) => {
   try {
     const data = req.body;
-    // console.log("data: ", data);
+    // //console.log("data: ", data);
     const result = await csvBulkData.insertMany(data);
     res.send(result);
-    console.log("result: ", result);
+    ////console.log("result: ", result);
   } catch (error) {
     res.send({
       success: false,
@@ -305,16 +396,16 @@ app.get("/get-questions", async (req, res) => {
     const searchParameteresForQueries = JSON.parse(
       searchParameteresForQueriesString
     );
-    // console.log("searchParameteresForQueries: ", searchParameteresForQueries);
+    // //console.log("searchParameteresForQueries: ", searchParameteresForQueries);
     const { topicName, questionName, difficultyLevel } =
       searchParameteresForQueries;
     let query = {};
     if (topicName) query.topicName = topicName;
     if (questionName) query.questionName = questionName;
     if (difficultyLevel) query.difficultyLevel = difficultyLevel;
-    console.log("query: ", query);
+    //console.log("query: ", query);
     if (!Object.keys(query).length) {
-      console.log("xxxxxxxxxxxxxxxxx");
+      //console.log("xxxxxxxxxxxxxxxxx");
       return res.send([]);
     }
 
@@ -326,7 +417,7 @@ app.get("/get-questions", async (req, res) => {
     //   projection: { _id: 0, title: 1, imdb: 1 },
     // };
     const result = await csvBulkData.find(query).toArray();
-    // console.log("result: ", result);
+    // //console.log("result: ", result);
     res.send(result);
   } catch (error) {
     res.send({
@@ -340,7 +431,7 @@ app.post("/add-assesment", async (req, res) => {
   try {
     const assesment = req.body;
     const result = await assesmentData.insertOne(assesment);
-    // console.log("result: ", result);
+    // //console.log("result: ", result);
     res.send(result);
   } catch (error) {
     res.send({
@@ -363,10 +454,10 @@ app.get("/assessments", async (req, res) => {
 app.get("/assessment", async (req, res) => {
   try {
     const _id = req?.query?._id;
-    console.log("_id: ", _id);
+    ////console.log("_id: ", _id);
     const query = { _id: new ObjectId(_id) };
     const result = await assesmentData.findOne(query);
-    // console.log("result: ", result);
+    // //console.log("result: ", result);
     res.send(result);
   } catch (error) {
     res.send({
@@ -378,7 +469,7 @@ app.get("/assessment", async (req, res) => {
 app.get("/assessmentlabel", async (req, res) => {
   try {
     const _id = req?.query?._id;
-    console.log("_id: ", _id);
+    ////console.log("_id: ", _id);
     const query = { _id: new ObjectId(_id) };
     const options = {
       // Include only the `title` and `imdb` fields in each returned document
@@ -389,7 +480,7 @@ app.get("/assessmentlabel", async (req, res) => {
       },
     };
     const result = await assesmentData.findOne(query, options);
-    // console.log("result: ", result);
+    // //console.log("result: ", result);
     res.send(result);
   } catch (error) {
     res.send({
@@ -401,9 +492,9 @@ app.get("/assessmentlabel", async (req, res) => {
 app.post("/assessment-response", async (req, res) => {
   try {
     const response = req.body;
-    // console.log("response: ", response);
+    // //console.log("response: ", response);
     const result = await assesmentResponseData.insertOne(response);
-    console.log("response:", response);
+    ////console.log("response:", response);
     res.send(result);
   } catch (error) {
     res.send({
@@ -415,10 +506,10 @@ app.post("/assessment-response", async (req, res) => {
 app.get("/assessment-response", async (req, res) => {
   try {
     const _id = req?.query?._id;
-    console.log("_id: ", _id);
+    ////console.log("_id: ", _id);
     const query = { _id: new ObjectId(_id) };
     const result = await assesmentResponseData.findOne(query);
-    console.log("result: ", result);
+    // //console.log("result: ", result);
     res.send(result);
   } catch (error) {
     res.send({
@@ -430,7 +521,7 @@ app.get("/assessment-response", async (req, res) => {
 app.get("/assessment-responses", async (req, res) => {
   try {
     const email = req?.query?.email;
-    console.log("email: ", email);
+    ////console.log("email: ", email);
     const query = { studentEmail: email };
 
     const options = {
@@ -516,15 +607,15 @@ app.post("/add-course", async (req, res) => {
 app.post("/add-batch", async (req, res) => {
   try {
     const batch = req.body;
-    // console.log("batch: ", batch);
-    console.log("batch?.batchName: ", batch?.batchName);
+    // //console.log("batch: ", batch);
+    //console.log("batch?.batchName: ", batch?.batchName);
     const query = {};
     const allData = await batchDetails.find(query).toArray();
 
     if (!allData?.length) {
       const result = await batchDetails.insertOne(batch);
       if (result?.acknowledged) {
-        // console.log("xxxxxxxxxxx", result);
+        // //console.log("xxxxxxxxxxx", result);
         const filter = { _id: new ObjectId(batch?.course?.course_id) };
         const updateDoc = {
           $set: {
@@ -532,7 +623,7 @@ app.post("/add-batch", async (req, res) => {
           },
         };
         const result2 = await courseDetails.updateOne(filter, updateDoc);
-        console.log("xxxxxxxx: ", result2);
+        //console.log("xxxxxxxx: ", result2);
         if (result2?.modifiedCount) {
           res.send({ success: true, message: "batch successfully added." });
         } else {
@@ -576,7 +667,7 @@ app.post("/add-batch", async (req, res) => {
             },
           };
           const result2 = await courseDetails.updateOne(filter, updateDoc);
-          console.log("result2", result2);
+          //console.log("result2", result2);
           if (result2?.modifiedCount) {
             res.send({ success: true, message: "batch successfully added." });
           } else {
@@ -672,9 +763,9 @@ app.delete("/batch/:id", async (req, res) => {
 app.post("/assignmentDetails", async (req, res) => {
   try {
     const assignment = req.body;
-    console.log(assignment);
+    //console.log(assignment);
     const result = await assignmentDetails.insertOne(assignment);
-    console.log("result: ", result);
+    //console.log("result: ", result);
     if (result?.acknowledged) {
       res.send({
         success: true,
@@ -699,9 +790,9 @@ app.post("/assignmentDetails", async (req, res) => {
 app.post("/exerciseDetails", async (req, res) => {
   try {
     const exercise = req.body;
-    // console.log(exercise)
+    // //console.log(exercise)
     const result = await exerciseCollection.insertOne(exercise);
-    console.log("result: ", result);
+    //console.log("result: ", result);
     if (result?.acknowledged) {
       res.send({
         success: true,
@@ -736,7 +827,7 @@ app.get("/exerciseSearch", async (req, res) => {
       });
     }
 
-    // console.log(query)
+    // //console.log(query)
     const data = await exerciseCollection.find(query).toArray();
     if (data?.length > 0) {
       res?.send({
@@ -763,7 +854,7 @@ app.get("/exerciseSearch", async (req, res) => {
 app.get("/searchAssignment", async (req, res) => {
   try {
     const queers = JSON.parse(req?.headers?.data);
-    console.log(queers);
+    //console.log(queers);
     const queryTemp = queers ? { ...queers } : {};
     const query = {};
     const dataKeys = Object.keys(queryTemp);
@@ -773,7 +864,7 @@ app.get("/searchAssignment", async (req, res) => {
       }
     });
 
-    // console.log(query)
+    // //console.log(query)
     const data = await assignmentDetails.find(query).toArray();
     if (data?.length > 0) {
       res?.send({
@@ -800,9 +891,9 @@ app.get("/searchAssignment", async (req, res) => {
   app.post("/lectureDetails", async (req, res) => {
     try {
       const lecture = req.body;
-      console.log(lecture);
+      //console.log(lecture);
       const result = await lectureCollection.insertOne(lecture);
-      console.log("result: ", result);
+      //console.log("result: ", result);
       if (result?.acknowledged) {
         res.send({
           success: true,
@@ -827,7 +918,7 @@ app.get("/searchAssignment", async (req, res) => {
 app.post("/coupon-details", async (req, res) => {
   try {
     const couponDetailsFromUI = req.body;
-    console.log("couponDetails: ", couponDetailsFromUI);
+    //console.log("couponDetails: ", couponDetailsFromUI);
     const result = await couponDetails.insertOne(couponDetailsFromUI);
     res.send(result);
   } catch (error) {
@@ -842,7 +933,7 @@ app.post("/coupon-details", async (req, res) => {
 app.get("/all-coupons", async (req, res) => {
   try {
     const queers = JSON.parse(req?.headers?.data);
-    console.log(queers)
+
     const queryTemp = queers ? { ...queers } : {};
     let query = {};
     const dataKeys = Object.keys(queryTemp);
@@ -865,6 +956,7 @@ app.get("/all-coupons", async (req, res) => {
         "actionsDetails.updation.updaterEmail": query?.updaterEmail,
       };
     }
+
     // console.log(query);
     if (queers.couponLabel) {
       query = {
@@ -872,7 +964,7 @@ app.get("/all-coupons", async (req, res) => {
         "couponLabel":queers.couponLabel
       }
     }
-    console.log(query);
+   
     const data = await couponDetails.find(query).toArray();
     if (data?.length > 0) {
       res?.send({
@@ -898,7 +990,7 @@ app.get("/all-coupons", async (req, res) => {
 app.get("/program-list", async (req, res) => {
   try {
     const queers = JSON.parse(req?.headers?.data);
-    console.log(queers);
+    //console.log(queers);
     const queryTemp = queers ? { ...queers } : {};
     const query = {};
     const dataKeys = Object.keys(queryTemp);
@@ -907,7 +999,7 @@ app.get("/program-list", async (req, res) => {
         query[key] = queryTemp[key];
       }
     });
-    console.log(query);
+    //console.log(query);
     const data = await programDetails.find(query).toArray();
     if (data?.length > 0) {
       res?.send({
@@ -928,9 +1020,71 @@ app.get("/program-list", async (req, res) => {
     });
   }
 });
+app.post("/create-payment-intent", async (req, res) => {
+  // //console.log("hoina keno");
+  try {
+    const { price } = req.body;
+    const amount = price * 100;
+    // //console.log(price, ":::::::::", amount);
+    // Create a PaymentIntent with the order amount and currency
+    const paymentIntent = await stripe.paymentIntents.create({
+      currency: "inr",
+      amount: amount,
+      payment_method_types: ["card"],
+    });
+    res.send({
+      clientSecret: paymentIntent.client_secret,
+    });
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+app.post("/setpaymentstatus", async (req, res) => {
+  try {
+    const query = req.query;
+    const { _id, paymentId } = query;
 
-// Amit server code
+    const filter = {
+      _id: new ObjectId(_id),
+    };
+    const options = { upsert: true };
 
+    const updateDoc = {
+      $set: {
+        isPaid: true,
+        paymentId,
+        "purchaseInfo.paidAt": moment().format(),
+      },
+    };
+    const result = await coursePurchaseDetails.updateOne(
+      filter,
+      updateDoc,
+      options
+    );
+    console.log(result);
+    if (result?.modifiedCount) {
+      res.send({
+        success: true,
+        message: "you have succesfully paid this course",
+      });
+    } else {
+      res.send({
+        success: false,
+        error:
+          "You have successfully paid, \nbut it's not updated   on our system\n please note this payment id and contact our team.",
+      });
+    }
+  } catch (error) {
+    res.send({
+      success: false,
+      error:
+        "You have successfully paid, \nbut it's not updated   on our system\n please note this payment id and contact our team.",
+    });
+  }
+});
 app.get("/", async (req, res) => {
   res.send("Geeks of Gurukul Server is running");
 });
