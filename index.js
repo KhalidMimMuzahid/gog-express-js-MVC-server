@@ -59,8 +59,12 @@ const assesmentResponseData = client
   .collection("assesmentResponseData");
 
 const programDetails = client.db("courseDatabase").collection("programDetails");
-const couponDetails = client.db("courseDatabase").collection("couponDetails");
 
+//module details
+const moduleDetails = client.db("courseDatabase").collection("moduleDetails");
+
+//coupon collection
+const couponDetails = client.db("courseDatabase").collection("couponDetails");
 app.get("/all-program", async (req, res) => {
   try {
     const query = {};
@@ -1085,6 +1089,60 @@ app.post("/setpaymentstatus", async (req, res) => {
     });
   }
 });
+
+app.get("/all-batches-by-course", async (req, res) => {
+  try {
+    const _id = req.query._id;
+
+    const query = { "course.course_id": _id };
+    const batches = await batchDetails.find(query).toArray();
+    res.send({ data: batches });
+  } catch {
+    res.send({ data: [] });
+  }
+});
+
+app.post("/moduleDetails", async (req, res) => {
+  try {
+    const moduleDetailsInfo = req.body;
+
+    // const result = await moduleDetails.insertOne(moduleDetails);
+    const query = {
+      "program.program_id": moduleDetailsInfo?.program?.program_id,
+      "course.course_id": moduleDetailsInfo?.course?.course_id,
+      "batch.batch_id": moduleDetailsInfo?.batch?.batch_id,
+    };
+
+    const result = await moduleDetails.findOne(query);
+
+    if (!result?._id) {
+      const result2 = await moduleDetails.insertOne(moduleDetailsInfo);
+      if (result2?.acknowledged) {
+        res.send({
+          success: true,
+          message: "Module Successful Added",
+        });
+      } else {
+        res.send({
+          success: false,
+          error: "Server internal error",
+        });
+      }
+    } else {
+      res?.send({
+        success: false,
+        error: "This Module Name has already been exists in this course",
+      });
+    }
+  } catch (error) {
+    res?.send({
+      success: false,
+      error: "Server internal error",
+    });
+  }
+});
+
+
 app.get("/", async (req, res) => {
   res.send("Geeks of Gurukul Server is running");
 });
