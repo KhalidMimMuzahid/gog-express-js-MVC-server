@@ -218,11 +218,28 @@ app.post("/usersbasics", async (req, res) => {
     });
   }
 });
-app.post("/user-details", async (req, res) => {
+app.put("/user-details", async (req, res) => {
   try {
     const userDetails = req.body;
-    ////console.log("userDetails: ", userDetails);
-    const result = await userDetailsCollection.insertOne(userDetails);
+    // console.log("userDetails: ", userDetails);
+    const { profession, email, address } = userDetails;
+    const filter = { email: email };
+    const justNow = moment().format();
+    const updateDoc = {
+      $set: {
+        justCreated: false,
+        updatedAt: justNow,
+        profession: profession,
+        address: address,
+      },
+    };
+    const options = { upsert: true };
+    const result = await userBasicCollection.updateOne(
+      filter,
+      updateDoc,
+      options
+    );
+    console.log(result);
     res.send(result);
   } catch (error) {
     res.send({
@@ -231,6 +248,7 @@ app.post("/user-details", async (req, res) => {
     });
   }
 });
+
 app.put("/update-phone", async (req, res) => {
   try {
     const user = req.body;
@@ -241,27 +259,6 @@ app.put("/update-phone", async (req, res) => {
       $set: {
         phoneNumber: phoneNumber,
         name: displayName,
-        updatedAt: justNow,
-      },
-    };
-    const result = await userBasicCollection.updateOne(filter, updateDoc);
-    res.send(result);
-  } catch (error) {
-    res.send({
-      success: false,
-      error: error.message,
-    });
-  }
-});
-
-app.put("/just-created-false", async (req, res) => {
-  try {
-    const email = req?.query?.email;
-    const filter = { email: email };
-    const justNow = moment().format();
-    const updateDoc = {
-      $set: {
-        justCreated: false,
         updatedAt: justNow,
       },
     };
@@ -395,7 +392,7 @@ app.post("/add-csv-data", async (req, res) => {
 
 app.get("/get-questions", async (req, res) => {
   try {
-    const searchbParameteresForQueriesString =
+    const searchParameteresForQueriesString =
       req.headers.searchparameteresforqueries;
     const searchParameteresForQueries = JSON.parse(
       searchParameteresForQueriesString
@@ -965,10 +962,10 @@ app.get("/all-coupons", async (req, res) => {
     if (queers.couponLabel) {
       query = {
         ...query,
-        "couponLabel":queers.couponLabel
-      }
+        couponLabel: queers.couponLabel,
+      };
     }
-   
+
     const data = await couponDetails.find(query).toArray();
     if (data?.length > 0) {
       res?.send({
@@ -1101,6 +1098,17 @@ app.get("/all-batches-by-course", async (req, res) => {
     res.send({ data: [] });
   }
 });
+app.get("/all-modules-by-batch", async (req, res) => {
+  try {
+    const _id = req.query._id;
+
+    const query = { "batch.batch_id": _id };
+    const modules = await moduleDetails.find(query).toArray();
+    res.send({ data: modules });
+  } catch {
+    res.send({ data: [] });
+  }
+});
 
 app.post("/moduleDetails", async (req, res) => {
   try {
@@ -1111,6 +1119,7 @@ app.post("/moduleDetails", async (req, res) => {
       "program.program_id": moduleDetailsInfo?.program?.program_id,
       "course.course_id": moduleDetailsInfo?.course?.course_id,
       "batch.batch_id": moduleDetailsInfo?.batch?.batch_id,
+      moduleName: moduleDetailsInfo?.moduleName,
     };
 
     const result = await moduleDetails.findOne(query);
@@ -1141,7 +1150,6 @@ app.post("/moduleDetails", async (req, res) => {
     });
   }
 });
-
 
 app.get("/", async (req, res) => {
   res.send("Geeks of Gurukul Server is running");
