@@ -37,11 +37,11 @@ const lectureCollection = client
   .db("courseDatabase")
   .collection("LectureDetails"); 
   
-//BatchCollection 
-const batchDetails = client.db("batchDatabase").collection("batchDetails"); 
-
 //BatchCollection
 const batchDetails = client.db("courseDatabase").collection("batchDetails");
+
+//module details
+const moduleDetails = client.db("courseDatabase").collection("moduleDetails");
 
 //coupon collection
 const couponDetails = client.db("courseDatabase").collection("couponDetails");
@@ -59,8 +59,7 @@ const assesmentResponseData = client
   .db("examsReponse")
   .collection("assesmentResponseData");
 
-const programDetails = client.db("courseDatabase").collection("programDetails");
-const couponDetails = client.db("courseDatabase").collection("couponDetails");
+const programDetails = client.db("courseDatabase").collection("programDetails"); 
 
 app.get("/all-program", async (req, res) => {
   try {
@@ -78,6 +77,18 @@ app.get("/all-courses-by-program", async (req, res) => {
     const query = { "program.program_id": _id };
     const courses = await courseDetails.find(query).toArray();
     res.send({ data: courses });
+  } catch {
+    res.send({ data: [] });
+  }
+});
+
+app.get("/all-batches-by-course", async (req, res) => {
+  try {
+    const _id = req.query._id;
+
+    const query = { "course.course_id": _id };
+    const batches = await batchDetails.find(query).toArray();
+    res.send({ data: batches });
   } catch {
     res.send({ data: [] });
   }
@@ -935,6 +946,54 @@ app.get("/program-list", async (req, res) => {
     });
   }
 });
+
+app.post("/moduleDetails", async (req, res) => {
+
+  try{
+    const moduleDetailsInfo = req.body;
+
+  // const result = await moduleDetails.insertOne(moduleDetails);
+const query = {
+  "program.program_id": moduleDetailsInfo?.program?.program_id,
+  "course.course_id": moduleDetailsInfo?.course?.course_id,
+  "batch.batch_id": moduleDetailsInfo?.batch?.batch_id,
+};
+
+const result = await moduleDetails.findOne(query);
+
+if(!result?._id){
+  const result2 = await moduleDetails.insertOne(moduleDetailsInfo);
+  if (result2?.acknowledged) {
+    res.send({
+      success: true,
+      message: "Module Successful Added",
+    });
+  } else {
+    res.send({
+      success: false,
+      error: "Server internal error",
+    });
+  }
+  
+}else{
+  res?.send(
+    {success:false,
+    error: "This Module Name has already been exists in this course"}
+  )
+}
+  }
+  catch (error) {
+    res?.send({
+      success: false,
+      error: "Server internal error",
+    });
+  }
+  
+
+
+  
+});
+
 
 // Amit server code
 
