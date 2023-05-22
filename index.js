@@ -35,8 +35,8 @@ const exerciseCollection = client
 // Collection
 const lectureCollection = client
   .db("courseDatabase")
-  .collection("LectureDetails"); 
-  
+  .collection("LectureDetails");
+
 //BatchCollection
 const batchDetails = client.db("courseDatabase").collection("batchDetails");
 
@@ -59,7 +59,7 @@ const assesmentResponseData = client
   .db("examsReponse")
   .collection("assesmentResponseData");
 
-const programDetails = client.db("courseDatabase").collection("programDetails"); 
+const programDetails = client.db("courseDatabase").collection("programDetails");
 
 app.get("/all-program", async (req, res) => {
   try {
@@ -860,7 +860,7 @@ app.post("/coupon-details", async (req, res) => {
 app.get("/all-coupons", async (req, res) => {
   try {
     const queers = JSON.parse(req?.headers?.data);
-    console.log(queers)
+    console.log(queers);
     const queryTemp = queers ? { ...queers } : {};
     let query = {};
     const dataKeys = Object.keys(queryTemp);
@@ -887,8 +887,8 @@ app.get("/all-coupons", async (req, res) => {
     if (queers.couponLabel) {
       query = {
         ...query,
-        "couponLabel":queers.couponLabel
-      }
+        couponLabel: queers.couponLabel,
+      };
     }
     console.log(query);
     const data = await couponDetails.find(query).toArray();
@@ -948,52 +948,44 @@ app.get("/program-list", async (req, res) => {
 });
 
 app.post("/moduleDetails", async (req, res) => {
-
-  try{
+  try {
     const moduleDetailsInfo = req.body;
 
-  // const result = await moduleDetails.insertOne(moduleDetails);
-const query = {
-  "program.program_id": moduleDetailsInfo?.program?.program_id,
-  "course.course_id": moduleDetailsInfo?.course?.course_id,
-  "batch.batch_id": moduleDetailsInfo?.batch?.batch_id,
-};
+    // const result = await moduleDetails.insertOne(moduleDetails);
+    const query = {
+      "program.program_id": moduleDetailsInfo?.program?.program_id,
+      "course.course_id": moduleDetailsInfo?.course?.course_id,
+      "batch.batch_id": moduleDetailsInfo?.batch?.batch_id,
+    };
 
-const result = await moduleDetails.findOne(query);
+    const result = await moduleDetails.findOne(query);
 
-if(!result?._id){
-  const result2 = await moduleDetails.insertOne(moduleDetailsInfo);
-  if (result2?.acknowledged) {
-    res.send({
-      success: true,
-      message: "Module Successful Added",
-    });
-  } else {
-    res.send({
-      success: false,
-      error: "Server internal error",
-    });
-  }
-  
-}else{
-  res?.send(
-    {success:false,
-    error: "This Module Name has already been exists in this course"}
-  )
-}
-  }
-  catch (error) {
+    if (!result?._id) {
+      const result2 = await moduleDetails.insertOne(moduleDetailsInfo);
+      if (result2?.acknowledged) {
+        res.send({
+          success: true,
+          message: "Module Successful Added",
+        });
+      } else {
+        res.send({
+          success: false,
+          error: "Server internal error",
+        });
+      }
+    } else {
+      res?.send({
+        success: false,
+        error: "This Module Name has already been exists in this course",
+      });
+    }
+  } catch (error) {
     res?.send({
       success: false,
       error: "Server internal error",
     });
   }
-  
-
-
-  
 });
-
 
 // Amit server code
 
