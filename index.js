@@ -1151,6 +1151,63 @@ app.post("/moduleDetails", async (req, res) => {
   }
 });
 
+//all modules and search
+app.get("/search-module", async (req, res) => {
+  try {
+    const queers = JSON.parse(req?.headers?.data);
+    //console.log(queers);
+    const queryObj = queers ? { ...queers } : {};
+    const queryTemp = {};
+    let query = {};
+    const dataKeys = Object.keys(queryObj);
+    dataKeys.forEach((key) => {
+      if (queryObj[key]) {
+        queryTemp[key] = queryObj[key];
+      }
+    });
+    // console.log(queryTemp);
+    if (queryTemp?.program_id && queryTemp?.course_id) {
+      query = {
+        "course.course_id": queryTemp?.course_id,
+        "program.program_id": queryTemp?.program_id,
+      };
+    } else if (queryTemp?.program_id) {
+      query = {
+        "program.program_id": queryTemp?.program_id,
+      };
+    } else if (queryTemp?.course_id) {
+      query = {
+        "course.course_id": queryTemp?.course_id,
+      };
+    }
+    if (queryTemp?.batch_id) {
+      query = { ...query, "batch.batch_id": queryTemp?.batch_id };
+      console.log("Query is", query);
+    }
+    // console.log(query);
+    const data = await moduleDetails.find(query).toArray();
+    console.log("data", data);
+    if (data?.length > 0) {
+      res?.send({
+        success: true,
+        data: data,
+        message: "Module found successfully",
+      });
+    } else {
+      res?.send({
+        success: false,
+        message: "Module Not Found!",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res?.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
 app.get("/", async (req, res) => {
   res.send("Geeks of Gurukul Server is running");
 });
