@@ -39,9 +39,7 @@ const exerciseCollection = client
   .db("courseDatabase")
   .collection("exerciseDetails");
 // Collection
-const lectureCollection = client
-  .db("courseDatabase")
-  .collection("LectureDetails");
+const LectureDetails = client.db("courseDatabase").collection("LectureDetails");
 //BatchCollection
 const batchDetails = client.db("courseDatabase").collection("batchDetails");
 
@@ -1110,6 +1108,66 @@ app.get("/all-modules-by-batch", async (req, res) => {
   }
 });
 
+//search batch
+app.get("/search-batch", async (req, res) => {
+  try {
+    const queers = JSON.parse(req?.headers?.data);
+    //console.log(queers);
+    const queryObj = queers ? { ...queers } : {};
+    const queryTemp = {};
+    let query = {};
+    const dataKeys = Object.keys(queryObj);
+    dataKeys.forEach((key) => {
+      if (queryObj[key]) {
+        queryTemp[key] = queryObj[key];
+      }
+    });
+
+    // console.log(queryTemp);
+
+    if (queryTemp?.program_id && queryTemp?.course_id) {
+      query = {
+        "course.course_id": queryTemp?.course_id,
+        "program.program_id": queryTemp?.program_id,
+      };
+    } else if (queryTemp?.program_id) {
+      query = {
+        "program.program_id": queryTemp?.program_id,
+      };
+    } else if (queryTemp?.course_id) {
+      query = {
+        "course.course_id": queryTemp?.course_id,
+      };
+    }
+
+    if (queryTemp?.batchName) {
+      query = { ...query, batchName: queryTemp?.batchName };
+    }
+
+    console.log(query);
+    const data = await batchDetails.find(query).toArray();
+    console.log(data);
+    if (data?.length > 0) {
+      res?.send({
+        success: true,
+        data: data,
+        message: "Assignment found successfully",
+      });
+    } else {
+      res?.send({
+        success: false,
+        message: "Server internal error",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res?.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
 app.post("/moduleDetails", async (req, res) => {
   try {
     const moduleDetailsInfo = req.body;
@@ -1147,6 +1205,187 @@ app.post("/moduleDetails", async (req, res) => {
     res?.send({
       success: false,
       error: "Server internal error",
+    });
+  }
+});
+
+app.get("/search-course", async (req, res) => {
+  try {
+    const queers = JSON.parse(req?.headers?.data);
+    //console.log(queers);
+    const queryObj = queers ? { ...queers } : {};
+    const queryTemp = {};
+    let query = {};
+    const dataKeys = Object.keys(queryObj);
+    dataKeys.forEach((key) => {
+      if (queryObj[key]) {
+        queryTemp[key] = queryObj[key];
+      }
+    });
+
+    // console.log(queryTemp);
+
+    if (queryTemp?.program_id) {
+      query = {
+        "program.program_id": queryTemp?.program_id,
+      };
+    }
+
+    if (queryTemp?.courseName) {
+      query = {
+        ...query,
+        courseName: queryTemp?.courseName,
+      };
+    }
+
+    if (queryTemp?.creatorEmail) {
+      query = {
+        ...query,
+        "actionsDetails.creation.creatorEmail": queryTemp?.creatorEmail,
+      };
+    }
+
+    if (queryTemp?.updaterEmail) {
+      query = {
+        ...query,
+        "actionsDetails.updation.updatorEmail": queryTemp?.updaterEmail,
+      };
+    }
+
+    // console.log(query);
+    const data = await courseDetails.find(query).toArray();
+    // console.log(data);
+    if (data?.length > 0) {
+      res?.send({
+        success: true,
+        data: data,
+        message: "Assignment found successfully",
+      });
+    } else {
+      res?.send({
+        success: false,
+        message: "Server internal error",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res?.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+app.get("/search-lecture", async (req, res) => {
+  try {
+    const queers = JSON.parse(req?.headers?.data);
+    console.log(queers);
+    const queryObj = queers ? { ...queers } : {};
+    const queryTemp = {};
+    let query = {};
+    const dataKeys = Object.keys(queryObj);
+    dataKeys.forEach((key) => {
+      if (queryObj[key]) {
+        queryTemp[key] = queryObj[key];
+      }
+    });
+
+    // console.log(queryTemp);
+
+    if (queryTemp?.program_id) {
+      query = {
+        "program.program_id": queryTemp?.program_id,
+      };
+    }
+
+    if (queryTemp?.course_id) {
+      query = {
+        ...query,
+        "course.course_id": queryTemp?.course_id,
+      };
+    }
+    if (queryTemp?.batch_id) {
+      query = {
+        ...query,
+        "batch.batch_id": queryTemp?.batch_id,
+      };
+    }
+    if (queryTemp?.module_id) {
+      query = {
+        ...query,
+        "module.module": queryTemp?.module_id,
+      };
+    }
+
+    if (queryTemp?.lectureName) {
+      query = {
+        ...query,
+        lectureName: queryTemp?.lectureName,
+      };
+    }
+
+    if (queryTemp?.creatorEmail) {
+      query = {
+        ...query,
+        "actionsDetails.creation.creatorEmail": queryTemp?.creatorEmail,
+      };
+    }
+
+    // console.log("query", query);
+    const data = await LectureDetails.find(query).toArray();
+    console.log("firstX", data);
+    if (data?.length > 0) {
+      res?.send({
+        success: true,
+        data: data,
+        message: "Lecture found successfully",
+      });
+    } else {
+      res?.send({
+        success: false,
+        message: "Server internal error",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res?.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+//search users
+app.get("/search-user", async (req, res) => {
+  try {
+    const queers = JSON.parse(req?.headers?.data);
+    // console.log(queers);
+    const queryObj = queers ? { ...queers } : {};
+    const queryTemp = {};
+    const dataKeys = Object.keys(queryObj);
+    dataKeys.forEach((key) => {
+      if (queryObj[key]) {
+        queryTemp[key] = queryObj[key];
+      }
+    });
+
+    const data = await userBasicCollection.find(queryTemp).toArray();
+    if (data?.length > 0) {
+      res?.send({
+        success: true,
+        data: data,
+        message: "Lecture found successfully",
+      });
+    } else {
+      res?.send({
+        success: false,
+        message: "Server internal error",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res?.send({
+      success: false,
+      error: error.message,
     });
   }
 });
