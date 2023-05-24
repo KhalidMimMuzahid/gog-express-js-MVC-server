@@ -1273,6 +1273,67 @@ app.get("/search-assessment", async (req, res) => {
   }
 });
 
+
+// api for searching user
+app.get("/search-users", async (req, res) => {
+  try {
+    const queers = JSON.parse(req?.headers?.data);
+    // console.log(queers);
+    const queryObj = queers ? { ...queers } : {};
+    const queryTemp = {};
+    let query = {};
+    const dataKeys = Object.keys(queryObj);
+    dataKeys.forEach((key) => {
+      if (queryObj[key]) {
+        queryTemp[key] = queryObj[key];
+      }
+    });
+    // console.log(queryTemp);
+    
+    if (queryTemp?.name) {
+      query = {
+        "name": queryTemp?.name,
+      
+      }
+    }
+    if (queryTemp?.email) {
+      query = {
+        ...query, "email": queryTemp?.email,
+      }
+    }
+    if (queryTemp?.phoneNumber) {
+      query = {
+        ...query,
+        "phoneNumber": queryTemp?.phoneNumber,
+      };
+    }
+    
+    // console.log(query);
+    
+    const data = await userBasicCollection.find(query).toArray();
+    // console.log("data", data);
+    if (data?.length > 0) {
+      res?.send({
+        success: true,
+        data: data,
+        message: "Users found successfully!",
+      });
+    } else {
+      res?.send({
+        success: false,
+        message: "Don't have any user!",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res?.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+
 app.get("/", async (req, res) => {
   res.send("Geeks of Gurukul Server is running");
 });
