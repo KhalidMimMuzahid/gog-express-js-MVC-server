@@ -50,6 +50,9 @@ const assesmentResponseData = client
 const programDetails = client.db("courseDatabase").collection("programDetails");
 const moduleDetails = client.db("courseDatabase").collection("moduleDetails");
 const couponDetails = client.db("courseDatabase").collection("couponDetails");
+const exerciseResponse = client
+  .db("examsReponse")
+  .collection("exerciseResponse");
 app.get("/all-program", async (req, res) => {
   try {
     const query = {};
@@ -1485,6 +1488,95 @@ app.get("/search-assessment", async (req, res) => {
     });
   }
 });
+
+// Api for storing exercise state of each student
+app.post("/exercise-response", async (req, res) => {
+  try {
+    const exerciseData = req.body;
+    const query = {
+      "lecture.lecture_id": exerciseData?.lecture?.lecture_id,
+      "assignment.assignment_id": exerciseData?.assignment.assignment_id,
+      "exercise.exercise_id": exerciseData?.exercise.exercise_id,
+      "submissionDetails.studentEmail":
+        exerciseData?.submissionDetails.studentEmail,
+    };
+    // Check if the data already exists
+
+    const existingData = await exerciseResponse.findOne(query);
+    // console.log(" query: ", query);
+    // console.log(" existingData: ", existingData);
+    if (!existingData) {
+      // Save the data to the collection
+      result = await exerciseResponse.insertOne(exerciseData);
+      if (result) {
+        res.send({
+          success: true,
+          message: "Data saved successfully!",
+        });
+      } else {
+        // to
+        res.send({
+          success: false,
+          message: "Data haven't saved successfully!",
+        });
+      }
+    } else {
+      res.send({
+        success: true,
+        message: "You have already started this exercise!",
+      });
+    }
+  } catch (err) {
+    res.send({
+      success: false,
+      message: "server internal error",
+    });
+  }
+});
+
+
+// Retrieve exercise state of a student
+app.get("/exercise-response", async (req, res) => {
+  try {
+    const queryString = req?.headers?.query;
+    const queryTemp = JSON.parse(queryString)
+    // console.log(query);
+    // return res.send({message:'ok'})
+
+    const query = {
+      "lecture.lecture_id": queryTemp?.lecture_id,
+      "assignment.assignment_id": queryTemp?.assignment_id,
+      "exercise.exercise_id": queryTemp?.exercise_id,
+      "submissionDetails.studentEmail": queryTemp?.studentEmail,
+    };
+
+    // console.log(query);
+
+    const existingData = await exerciseResponse.findOne(query);
+    console.log(" query: ", query);
+    console.log(" existingData: ", existingData);
+
+    if (existingData) {
+      res.send({
+        success: true,
+        message: "Exercise state retrieved successfully!",
+        data: existingData,
+      });
+    } else {
+      res.send({
+        success: false,
+        message: "Exercise state not found!",
+      });
+    }
+  } catch (err) {
+    res.send({
+      success: false,
+      message: "Server internal error",
+    });
+  }
+});
+
+
 app.get("/", async (req, res) => {
   res.send("Geeks of Gurukul Server is running");
 });
