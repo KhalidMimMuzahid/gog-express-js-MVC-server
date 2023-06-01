@@ -1534,12 +1534,11 @@ app.post("/exercise-response", async (req, res) => {
   }
 });
 
-
 // Retrieve exercise state of a student
 app.get("/exercise-response", async (req, res) => {
   try {
     const queryString = req?.headers?.query;
-    const queryTemp = JSON.parse(queryString)
+    const queryTemp = JSON.parse(queryString);
     // console.log(query);
     // return res.send({message:'ok'})
 
@@ -1572,6 +1571,60 @@ app.get("/exercise-response", async (req, res) => {
     res.send({
       success: false,
       message: "Server internal error",
+    });
+  }
+});
+
+//API for updating usees skills
+
+app.put("/update-skill", async (req, res) => {
+  try {
+    const skillsData = req.body;
+    const { skills, email } = skillsData;
+    console.log("skilldata", skills, email);
+    const filter = { email: email };
+    const justNow = moment().format();
+    
+    // Find the user document
+    const user = await userBasicCollection.findOne(filter);
+    
+    if (user) {
+      // User exists, update the skills array
+      let updatedSkills;
+      if (user.skills) {
+        // If skills array already exists, merge the existing and new skills
+        updatedSkills = [...user.skills, ...skills];
+      } else {
+        // If skills array doesn't exist, create a new array with the new skills
+        updatedSkills = skills;
+      }
+      
+      const updateDoc = {
+        $set: {
+          updatedAt: justNow,
+          skills: updatedSkills,
+        },
+      };
+      
+      const result = await userBasicCollection.updateOne(filter, updateDoc);
+      console.log(result);
+      res.send(result);
+    } else {
+      // User doesn't exist, create a new document with the skills array
+      const newDoc = {
+        email: email,
+        updatedAt: justNow,
+        skills: skills,
+      };
+      
+      const result = await userBasicCollection.insertOne(newDoc);
+      console.log(result);
+      res.send(result);
+    }
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
     });
   }
 });
