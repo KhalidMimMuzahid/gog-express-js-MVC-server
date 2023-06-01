@@ -50,6 +50,13 @@ const assesmentResponseData = client
 const programDetails = client.db("courseDatabase").collection("programDetails");
 const moduleDetails = client.db("courseDatabase").collection("moduleDetails");
 const couponDetails = client.db("courseDatabase").collection("couponDetails");
+const exerciseResponse = client
+  .db("examsReponse")
+  .collection("exerciseResponse");
+const assignmentResponse = client
+  .db("examsReponse")
+  .collection("assignmentResponse");
+
 app.get("/all-program", async (req, res) => {
   try {
     const query = {};
@@ -1485,6 +1492,277 @@ app.get("/search-assessment", async (req, res) => {
     });
   }
 });
+
+// Api for storing exercise state of each student
+app.post("/exercise-response", async (req, res) => {
+  try {
+    const exerciseData = req.body;
+    const query = {
+      "lecture.lecture_id": exerciseData?.lecture?.lecture_id,
+      "assignment.assignment_id": exerciseData?.assignment.assignment_id,
+      "exercise.exercise_id": exerciseData?.exercise.exercise_id,
+      "submissionDetails.studentEmail":
+        exerciseData?.submissionDetails.studentEmail,
+    };
+    // Check if the data already exists
+    const existingData = await exerciseResponse.findOne(query);
+    // console.log(" query: ", query);
+    // console.log(" existingData: ", existingData);
+    if (!existingData) {
+      // Save the data to the collection
+      result = await exerciseResponse.insertOne(exerciseData);
+      if (result) {
+        res.send({
+          success: true,
+          result,
+          message: "Data saved successfully!",
+        });
+      } else {
+        // to
+        res.send({
+          success: false,
+          message: "Data haven't saved successfully!",
+        });
+      }
+    } else {
+      res.send({
+        success: false,
+        message: "You have already started this exercise!",
+      });
+    }
+  } catch (err) {
+    res.send({
+      success: false,
+      message: "server internal error",
+    });
+  }
+});
+
+// Retrieve exercise state of a student
+app.get("/exercise-response", async (req, res) => {
+  try {
+    const queryString = req?.headers?.query;
+    const queryTemp = JSON.parse(queryString);
+    // console.log(query);
+    // return res.send({message:'ok'})
+    const query = {
+      "lecture.lecture_id": queryTemp?.lecture_id,
+      "assignment.assignment_id": queryTemp?.assignment_id,
+      "exercise.exercise_id": queryTemp?.exercise_id,
+      "submissionDetails.studentEmail": queryTemp?.studentEmail,
+    };
+    // console.log(query);
+    const existingData = await exerciseResponse.findOne(query);
+    console.log(" query: ", query);
+    console.log(" existingData: ", existingData);
+    if (existingData) {
+      res.send({
+        success: true,
+        message: "Exercise state retrieved successfully!",
+        data: existingData,
+      });
+    } else {
+      res.send({
+        success: false,
+        message: "Exercise state not found!",
+      });
+    }
+  } catch (err) {
+    res.send({
+      success: false,
+      message: "Server internal error",
+    });
+  }
+});
+
+app.put("/edit-user/:email", async (req, res) => {
+  try {
+    const email = req.params.email;
+    // console.log(email);
+    const userDetails = req.body;
+    const { name, address } = userDetails;
+    const filter = { email: email };
+    const justNow = moment().format();
+    const updateDoc = {
+      $set: {
+        updatedAt: justNow,
+        name: name,
+        address: address,
+      },
+    };
+    const options = { upsert: true };
+    const result = await userBasicCollection.updateOne(
+      filter,
+      updateDoc,
+      options
+    );
+    if (modifiedCount > 0) {
+      res?.send({
+        success: true,
+        data: result,
+        message: "Successfully updated data!",
+      });
+    } else {
+      res?.send({
+        success: false,
+        message: "Internal Server Error",
+      });
+    }
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// new APIs
+app.put("/exercise-response", async (req, res) => {
+  try {
+    const allDataForExerciseResponse = req.body;
+    const { query, responseData } = allDataForExerciseResponse;
+    const options = { upsert: true };
+    const updateDoc = {
+      $set: responseData,
+    };
+    // Check if the data already exists
+    const updatedDataResponse = await exerciseResponse.updateOne(
+      query,
+      updateDoc,
+      options
+    );
+    if (updatedDataResponse?.modifiedCount) {
+      res.send({
+        success: true,
+        message: "exercise submitted successfully",
+      });
+    } else {
+      res.send({
+        success: false,
+        message: "something went wrong,\nplease try again later.",
+      });
+    }
+  } catch (err) {
+    res.send({
+      success: false,
+      message: "server internal error",
+    });
+  }
+});
+
+app.post("/assignment-response", async (req, res) => {
+  try {
+    const assignmentData = req.body;
+    const query = {
+      "lecture.lecture_id": assignmentData?.lecture?.lecture_id,
+      "assignment.assignment_id": assignmentData?.assignment?.assignment_id,
+      "submissionDetails.studentEmail":
+        assignmentData?.submissionDetails?.studentEmail,
+    };
+    // Check if the data already exists
+    const existingData = await assignmentResponse.findOne(query);
+    // console.log(" query: ", query);
+    // console.log(" existingData: ", existingData);
+    if (!existingData) {
+      // Save the data to the collection
+      result = await assignmentResponse.insertOne(assignmentData);
+      if (result) {
+        res.send({
+          success: true,
+          result,
+          message: "Data saved successfully!",
+        });
+      } else {
+        // to
+        res.send({
+          success: false,
+          message: "Data haven't saved successfully!",
+        });
+      }
+    } else {
+      res.send({
+        success: false,
+        message: "You have already started this assignment!",
+      });
+    }
+  } catch (err) {
+    res.send({
+      success: false,
+      message: "server internal error",
+    });
+  }
+});
+
+app.get("/assignment-response", async (req, res) => {
+  try {
+    const queryString = req?.headers?.query;
+    const queryTemp = JSON.parse(queryString);
+    // console.log(query);
+    // return res.send({message:'ok'})
+    const query = {
+      "lecture.lecture_id": queryTemp?.lecture_id,
+      "assignment.assignment_id": queryTemp?.assignment_id,
+      "submissionDetails.studentEmail": queryTemp?.studentEmail,
+    };
+    // console.log(query);
+    const existingData = await assignmentResponse.findOne(query);
+    console.log(" query: ", query);
+    console.log(" existingData: ", existingData);
+    if (existingData) {
+      res.send({
+        success: true,
+        message: "Assignment state retrieved successfully!",
+        data: existingData,
+      });
+    } else {
+      res.send({
+        success: false,
+        message: "Assignment state not found!",
+      });
+    }
+  } catch (err) {
+    res.send({
+      success: false,
+      message: "Server internal error",
+    });
+  }
+});
+
+app.get("/assignment-exercises-response", async (req, res) => {
+  try {
+    const queryString = req?.headers?.query;
+    const queryTemp = JSON.parse(queryString);
+    // console.log(query);
+    // return res.send({message:'ok'})
+    const query = {
+      "lecture.lecture_id": queryTemp?.lecture_id,
+      "assignment.assignment_id": queryTemp?.assignment_id,
+      "submissionDetails.studentEmail": queryTemp?.studentEmail,
+    };
+    // console.log(query);
+    const exercises = await exerciseResponse.find(query).toArray();
+    console.log(" query: ", query);
+    console.log(" existingData: ", exercises);
+    if (exercises?.length > 0) {
+      res.send({
+        success: true,
+        message: "Assignment exercises state retrieved successfully!",
+        data: exercises,
+      });
+    } else {
+      res.send({
+        success: false,
+        message: "Assignment state not found!",
+      });
+    }
+  } catch (err) {
+    res.send({
+      success: false,
+      message: "Server internal error",
+    });
+  }
+});
+
 app.get("/", async (req, res) => {
   res.send("Geeks of Gurukul Server is running");
 });
