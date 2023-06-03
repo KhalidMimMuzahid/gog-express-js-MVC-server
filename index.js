@@ -1431,67 +1431,6 @@ app.get("/search-module", async (req, res) => {
     });
   }
 });
-//all assessment and search
-app.get("/search-assessment", async (req, res) => {
-  try {
-    const queers = JSON.parse(req?.headers?.data);
-    //console.log(queers);
-    const queryObj = queers ? { ...queers } : {};
-    const queryTemp = {};
-    let query = {};
-    const dataKeys = Object.keys(queryObj);
-    dataKeys.forEach((key) => {
-      if (queryObj[key]) {
-        queryTemp[key] = queryObj[key];
-      }
-    });
-    console.log(queryTemp);
-    if (queryTemp?.assessmentName) {
-      query = {
-        assessmentName: queryTemp?.assessmentName,
-      };
-    }
-    if (queryTemp?.batchId) {
-      query = {
-        ...query,
-        batchId: queryTemp?.batchId,
-      };
-    }
-    if (queryTemp?.creatorEmail) {
-      query = {
-        ...query,
-        "actionsDetails.creation.creatorEmail": queryTemp?.creatorEmail,
-      };
-    }
-    if (queryTemp?.updaterEmail) {
-      query = {
-        ...query,
-        "actionsDetails.updation.updatorEmail": queryTemp?.updaterEmail,
-      };
-    }
-    console.log(query);
-    const data = await assesmentData.find(query).toArray();
-    // console.log("data", data);
-    if (data?.length > 0) {
-      res?.send({
-        success: true,
-        data: data,
-        message: "Assessment found successfully",
-      });
-    } else {
-      res?.send({
-        success: false,
-        message: "Don't have any data!",
-      });
-    }
-  } catch (error) {
-    console.log(error);
-    res?.send({
-      success: false,
-      error: error.message,
-    });
-  }
-});
 
 // Api for storing exercise state of each student
 app.post("/exercise-response", async (req, res) => {
@@ -1575,46 +1514,6 @@ app.get("/exercise-response", async (req, res) => {
   }
 });
 
-app.put("/edit-user/:email", async (req, res) => {
-  try {
-    const email = req.params.email;
-    // console.log(email);
-    const userDetails = req.body;
-    const { name, address } = userDetails;
-    const filter = { email: email };
-    const justNow = moment().format();
-    const updateDoc = {
-      $set: {
-        updatedAt: justNow,
-        name: name,
-        address: address,
-      },
-    };
-    const options = { upsert: true };
-    const result = await userBasicCollection.updateOne(
-      filter,
-      updateDoc,
-      options
-    );
-    if (modifiedCount > 0) {
-      res?.send({
-        success: true,
-        data: result,
-        message: "Successfully updated data!",
-      });
-    } else {
-      res?.send({
-        success: false,
-        message: "Internal Server Error",
-      });
-    }
-  } catch (error) {
-    res.send({
-      success: false,
-      error: error.message,
-    });
-  }
-});
 
 // new APIs
 app.put("/exercise-response", async (req, res) => {
@@ -1762,6 +1661,200 @@ app.get("/assignment-exercises-response", async (req, res) => {
     });
   }
 });
+
+//search assessment
+app.get("/search-assessment", async (req, res) => {
+  try {
+    const queers = JSON.parse(req?.headers?.data);
+    //console.log(queers);
+    const queryObj = queers ? { ...queers } : {};
+    const queryTemp = {};
+    let query = {};
+    const dataKeys = Object.keys(queryObj);
+    dataKeys.forEach((key) => {
+      if (queryObj[key]) {
+        queryTemp[key] = queryObj[key];
+      }
+    });
+    console.log(queryTemp);
+    if (queryTemp?.assessmentName) {
+      query = {
+        assessmentName: queryTemp?.assessmentName,
+      };
+    }
+    if (queryTemp?.categoryName) {
+      query = {
+        ...query,
+        categoryName: queryTemp?.categoryName,
+      };
+    }
+    if (queryTemp?.batchId) {
+      query = {
+        ...query,
+        batchId: queryTemp?.batchId,
+      };
+    }
+    if (queryTemp?.creatorEmail) {
+      query = {
+        ...query,
+        "actionsDetails.creation.creatorEmail": queryTemp?.creatorEmail,
+      };
+    }
+    if (queryTemp?.updaterEmail) {
+      query = {
+        ...query,
+        "actionsDetails.updation.updatorEmail": queryTemp?.updaterEmail,
+      };
+    }
+    console.log(query);
+    const data = await assesmentData.find(query).toArray();
+    // console.log("data", data);
+    if (data?.length > 0) {
+      res?.send({
+        success: true,
+        data: data,
+        message: "Assessment found successfully",
+      });
+    } else {
+      res?.send({
+        success: false,
+        message: "Don't have any data!",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res?.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+app.put('/edit-user/:email', async (req, res) => {
+  try {
+    const email = req.params.email
+    // console.log(email);
+    const userDetails = req.body;
+    // console.log(userDetails)
+    const filter = { email: email };
+    const justNow = moment().format();
+    let updateDoc = {};
+    if(userDetails?.name && userDetails?.address){
+      updateDoc = {
+      $set: {
+        updatedAt: justNow,
+        name: userDetails?.name,
+        address: userDetails?.address,
+      },
+      }
+    }
+    if(userDetails?.photoURL){
+      updateDoc={
+      $set: {
+        updatedAt: justNow,
+        name: userDetails?.name,
+        address: userDetails?.address,
+        photoURL: userDetails?.photoURL
+      },
+      }
+    }
+    if(userDetails?.profession){
+      updateDoc={
+      $set: {
+        updatedAt: justNow,
+        profession: userDetails?.profession,
+      },
+      }
+    }
+    console.log(updateDoc)
+    const options = { upsert: true };
+    const result = await userBasicCollection.updateOne(
+      filter,
+      updateDoc,
+      options
+    );
+    console.log(result)
+    if(result?.modifiedCount>0){
+      res?.send({
+        success: true,
+        data: result,
+        message: "Successfully updated data!",
+      });
+    }else {
+      res?.send({
+        success: false,
+        message: "Internal Server Error",
+      })
+  }} catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+//API for updating usees skills
+
+app.put("/update-skill", async (req, res) => {
+  try {
+    const skillsData = req.body;
+    const { skills, email } = skillsData;
+    console.log("skilldata", skills, email);
+    const filter = { email: email };
+    const justNow = moment().format();
+
+    // Find the user document
+    const user = await userBasicCollection.findOne(filter);
+
+    if (user) {
+      // User exists, update the skills array
+      let updatedSkills;
+
+      if (user.skills) {
+        // If skills array already exists, create a Set from the existing skills
+        const skillsSet = new Set(user.skills);
+
+        // Add new unique skills to the Set
+        skills.forEach((skill) => {
+          skillsSet.add(skill);
+        });
+
+        // Convert the Set back to an array
+        updatedSkills = Array.from(skillsSet);
+      } else {
+        // If skills array doesn't exist, use the new skills as the array
+        updatedSkills = skills;
+      }
+
+      const updateDoc = {
+        $set: {
+          updatedAt: justNow,
+          skills: updatedSkills,
+        },
+      };
+
+      const result = await userBasicCollection.updateOne(filter, updateDoc);
+      console.log(result);
+      res.send(result);
+    } else {
+      // User doesn't exist, create a new document with the skills array
+      const newDoc = {
+        email: email,
+        updatedAt: justNow,
+        skills: skills,
+      };
+
+      const result = await userBasicCollection.insertOne(newDoc);
+      console.log(result);
+      res.send(result);
+    }
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+
 
 app.get("/", async (req, res) => {
   res.send("Geeks of Gurukul Server is running");
