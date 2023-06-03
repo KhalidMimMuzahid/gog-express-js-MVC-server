@@ -1,0 +1,254 @@
+// all imports here...
+const express = require("express");
+const db = require("../../utils/dbConnect")
+const { ObjectId } = require("mongodb");
+
+
+//initialize express router
+const router = express.Router();
+
+router.post("/add-assesment", async (req, res) => {
+  try {
+    const client = db.getClient(); // Use the existing database client
+    const assesmentData = client.db("questionsBank").collection("assesmentData");
+    const assesment = req.body;
+    const result = await assesmentData.insertOne(assesment);
+    // //console.log("result: ", result);
+    res.send(result);
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+//all assessment and search
+router.get("/search-assessment", async (req, res) => {
+  try {
+    const client = db.getClient(); // Use the existing database client
+    const assesmentData = client.db("questionsBank").collection("assesmentData");
+    const queers = JSON.parse(req?.headers?.data);
+    //console.log(queers);
+    const queryObj = queers ? { ...queers } : {};
+    const queryTemp = {};
+    let query = {};
+    const dataKeys = Object.keys(queryObj);
+    dataKeys.forEach((key) => {
+      if (queryObj[key]) {
+        queryTemp[key] = queryObj[key];
+      }
+    });
+    console.log(queryTemp);
+    if (queryTemp?.assessmentName) {
+      query = {
+        assessmentName: queryTemp?.assessmentName,
+      };
+    }
+    if (queryTemp?.categoryName) {
+      query = {
+        ...query,
+        categoryName: queryTemp?.categoryName,
+      };
+    }
+    if (queryTemp?.batchId) {
+      query = {
+        ...query,
+        batchId: queryTemp?.batchId,
+      };
+    }
+    if (queryTemp?.creatorEmail) {
+      query = {
+        ...query,
+        "actionsDetails.creation.creatorEmail": queryTemp?.creatorEmail,
+      };
+    }
+    if (queryTemp?.updaterEmail) {
+      query = {
+        ...query,
+        "actionsDetails.updation.updatorEmail": queryTemp?.updaterEmail,
+      };
+    }
+    console.log(query);
+    const data = await assesmentData.find(query).toArray();
+    // console.log("data", data);
+    if (data?.length > 0) {
+      res?.send({
+        success: true,
+        data: data,
+        message: "Assessment found successfully",
+      });
+    } else {
+      res?.send({
+        success: false,
+        message: "Don't have any data!",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res?.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+router.get("/assessments", async (req, res) => {
+  try {
+    const client = db.getClient(); // Use the existing database client
+    const assesmentData = client.db("questionsBank").collection("assesmentData");
+    const result = await assesmentData.find().toArray();
+    res.send(result);
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+router.get("/assessment", async (req, res) => {
+  try {
+    const client = db.getClient(); // Use the existing database client
+    const assesmentData = client.db("questionsBank").collection("assesmentData");
+    const _id = req?.query?._id;
+    ////console.log("_id: ", _id);
+    const query = { _id: new ObjectId(_id) };
+    const result = await assesmentData.findOne(query);
+    // //console.log("result: ", result);
+    res.send(result);
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+router.get("/assessmentlabel", async (req, res) => {
+  try {
+    const client = db.getClient(); // Use the existing database client
+    const assesmentData = client.db("questionsBank").collection("assesmentData");
+    const _id = req?.query?._id;
+    ////console.log("_id: ", _id);
+    const query = { _id: new ObjectId(_id) };
+    const options = {
+      // Include only the `title` and `imdb` fields in each returned document
+      projection: {
+        assessmentName: 1,
+        duration: 1,
+        categoryName: 1,
+      },
+    };
+    const result = await assesmentData.findOne(query, options);
+    // //console.log("result: ", result);
+    res.send(result);
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+router.post("/assessment-response", async (req, res) => {
+  try {
+    const client = db.getClient(); // Use the existing database client
+    const assesmentResponseData = client.db("examsReponse").collection("assesmentResponseData");
+    const response = req.body;
+    // //console.log("response: ", response);
+    const result = await assesmentResponseData.insertOne(response);
+    ////console.log("response:", response);
+    res.send(result);
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+router.get("/assessment-response", async (req, res) => {
+  try {
+    const client = db.getClient(); // Use the existing database client
+    const assesmentResponseData = client.db("examsReponse").collection("assesmentResponseData");
+    const _id = req?.query?._id;
+    ////console.log("_id: ", _id);
+    const query = { _id: new ObjectId(_id) };
+    const result = await assesmentResponseData.findOne(query);
+    // //console.log("result: ", result);
+    res.send(result);
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+router.get("/assessment-responses", async (req, res) => {
+  try {
+    const client = db.getClient(); // Use the existing database client
+    const assesmentResponseData = client.db("examsReponse").collection("assesmentResponseData");
+    const email = req?.query?.email;
+    ////console.log("email: ", email);
+    const query = { studentEmail: email };
+
+    const options = {
+      sort: {
+        startedAt: 1,
+      },
+      // Include only the `title` and `imdb` fields in each returned document
+      projection: {
+        title: 1,
+        startedAt: 1,
+        totalMark: 1,
+        assessmentId: 1,
+        aboutResponse: 1,
+      },
+    };
+    const result = await assesmentResponseData.find(query, options).toArray();
+
+    res.send(result);
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+router.get("/assignment-exercises-response", async (req, res) => {
+  try {
+    const client = db.getClient(); // Use the existing database client
+    const exerciseResponse = client.db("examsReponse").collection("exerciseResponse");
+    const queryString = req?.headers?.query;
+    const queryTemp = JSON.parse(queryString);
+    // console.log(query);
+    // return res.send({message:'ok'})
+    const query = {
+      "lecture.lecture_id": queryTemp?.lecture_id,
+      "assignment.assignment_id": queryTemp?.assignment_id,
+      "submissionDetails.studentEmail": queryTemp?.studentEmail,
+    };
+    // console.log(query);
+    const exercises = await exerciseResponse.find(query).toArray();
+    console.log(" query: ", query);
+    console.log(" existingData: ", exercises);
+    if (exercises?.length > 0) {
+      res.send({
+        success: true,
+        message: "Assignment exercises state retrieved successfully!",
+        data: exercises,
+      });
+    } else {
+      res.send({
+        success: false,
+        message: "Assignment state not found!",
+      });
+    }
+  } catch (err) {
+    res.send({
+      success: false,
+      message: "Server internal error",
+    });
+  }
+});
+
+
+
+
+module.exports = router;
