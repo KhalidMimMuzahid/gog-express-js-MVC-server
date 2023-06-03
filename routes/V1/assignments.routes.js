@@ -173,5 +173,42 @@ router.get("/assignment-response", async (req, res) => {
     });
   }
 });
+//for getting exercise response
+router.get("/assignment-exercises-response", async (req, res) => {
+  try {
+    const client = db.getClient(); // Use the existing database client
+    const exerciseResponse = client.db("examsReponse").collection("exerciseResponse");
+    const queryString = req?.headers?.query;
+    const queryTemp = JSON.parse(queryString);
+    // console.log(query);
+    // return res.send({message:'ok'})
+    const query = {
+      "lecture.lecture_id": queryTemp?.lecture_id,
+      "assignment.assignment_id": queryTemp?.assignment_id,
+      "submissionDetails.studentEmail": queryTemp?.studentEmail,
+    };
+    // console.log(query);
+    const exercises = await exerciseResponse.find(query).toArray();
+    console.log(" query: ", query);
+    console.log(" existingData: ", exercises);
+    if (exercises?.length > 0) {
+      res.send({
+        success: true,
+        message: "Assignment exercises state retrieved successfully!",
+        data: exercises,
+      });
+    } else {
+      res.send({
+        success: false,
+        message: "Assignment state not found!",
+      });
+    }
+  } catch (err) {
+    res.send({
+      success: false,
+      message: "Server internal error",
+    });
+  }
+});
 
 module.exports = router;
