@@ -1424,68 +1424,9 @@ app.get("/search-module", async (req, res) => {
     });
   }
 });
-//all assessment and search
-// app.get("/search-assessment", async (req, res) => {
-//   try {
-//     const queers = JSON.parse(req?.headers?.data);
-//     //console.log(queers);
-//     const queryObj = queers ? { ...queers } : {};
-//     const queryTemp = {};
-//     let query = {};
-//     const dataKeys = Object.keys(queryObj);
-//     dataKeys.forEach((key) => {
-//       if (queryObj[key]) {
-//         queryTemp[key] = queryObj[key];
-//       }
-//     });
-//     console.log(queryTemp);
-//     if (queryTemp?.assessmentName) {
-//       query = {
-//         assessmentName: queryTemp?.assessmentName,
-//       };
-//     }
-//     if (queryTemp?.batchId) {
-//       query = {
-//         ...query,
-//         batchId: queryTemp?.batchId,
-//       };
-//     }
-//     if (queryTemp?.creatorEmail) {
-//       query = {
-//         ...query,
-//         "actionsDetails.creation.creatorEmail": queryTemp?.creatorEmail,
-//       };
-//     }
-//     if (queryTemp?.updaterEmail) {
-//       query = {
-//         ...query,
-//         "actionsDetails.updation.updatorEmail": queryTemp?.updaterEmail,
-//       };
-//     }
-//     console.log(query);
-//     const data = await assesmentData.find(query).toArray();
-//     // console.log("data", data);
-//     if (data?.length > 0) {
-//       res?.send({
-//         success: true,
-//         data: data,
-//         message: "Assessment found successfully",
-//       });
-//     } else {
-//       res?.send({
-//         success: false,
-//         message: "Don't have any data!",
-//       });
-//     }
-//   } catch (error) {
-//     console.log(error);
-//     res?.send({
-//       success: false,
-//       error: error.message,
-//     });
-//   }
-// });
 
+
+// edit user
 app.put('/edit-user/:email', async (req, res) => {
 
   try {
