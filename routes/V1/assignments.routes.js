@@ -175,6 +175,7 @@ router.get("/assignment-response", async (req, res) => {
 });
 //replaced one
 //for getting exercise response
+//asssignment
 router.get("/assignment-exercises-response", async (req, res) => {
   try {
     const client = db.getClient(); // Use the existing database client
