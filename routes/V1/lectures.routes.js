@@ -45,8 +45,9 @@ router.get("/lecturesbymodule", async (req, res) => {
     const _id = req?.query?._id;
     const query = { "module.module_id": _id };
     const lectures = await LectureDetails.find(query).toArray();
+    console.log(lectures) 
     res.send(lectures);
-  } catch (error) {
+  } catch (error) { 
     res.send([]);
   }
 });

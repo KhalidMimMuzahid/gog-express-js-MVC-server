@@ -175,6 +175,7 @@ router.get("/assignment-response", async (req, res) => {
 });
 //replaced one
 //for getting exercise response
+//asssignment
 router.get("/assignment-exercises-response", async (req, res) => {
   try {
     const client = db.getClient(); // Use the existing database client
@@ -190,8 +191,8 @@ router.get("/assignment-exercises-response", async (req, res) => {
     };
     // console.log(query);
     const exercises = await exerciseResponse.find(query).toArray();
-    console.log(" query: ", query);
-    console.log(" existingData: ", exercises);
+    // console.log(" query: ", query);
+    // console.log(" existingData: ", exercises);
     if (exercises?.length > 0) {
       res.send({
         success: true,
