@@ -224,4 +224,87 @@ router.put("/exercise-response", async (req, res) => {
   }
 });
 
+
+// exercise response search   
+
+router.get("/search-exercise-response", async (req, res) => {
+  try {
+    const client = db.getClient(); // Use the existing database client
+    const exerciseResponse = client
+      .db("examsReponse")
+      .collection("exerciseResponse");
+    const queers = JSON.parse(req?.headers?.data);
+    console.log(queers);
+    const queryObj = queers ? { ...queers } : {};
+    const queryTemp = {};
+    let query = {status: "completed"};
+    const dataKeys = Object.keys(queryObj);
+    dataKeys.forEach((key) => {
+      if (queryObj[key]) {
+        queryTemp[key] = queryObj[key];
+      }
+    });
+    // console.log(queryTemp);
+    if (queryTemp?.program_id) {
+      query = {
+        ...query,
+        "program.program_id": queryTemp?.program_id,
+      };
+    }
+    if (queryTemp?.course_id) {
+      query = {
+        ...query,
+        "course.course_id": queryTemp?.course_id,
+      };
+    }
+    if (queryTemp?.batch_id) {
+      query = {
+        ...query,
+        "batch.batch_id": queryTemp?.batch_id,
+      };
+    }
+    if (queryTemp?.module_id) {
+      query = {
+        ...query,
+        "module.module_id": queryTemp?.module_id,
+      };
+    }
+    if (queryTemp?.lecture_id) {
+      query = {
+        ...query,
+        "lecture.lecture_id": queryTemp?.lecture_id,
+      };
+    }
+    if (queryTemp?.assignment_id) {
+      query = {
+        ...query,
+        "assignment.assignment_id": queryTemp?.assignment_id,
+      };
+    }
+   
+    console.log("query12", query);
+    const data = await exerciseResponse.find(query).toArray();
+    // console.log("firstX", data);
+    if (data?.length > 0) {
+      res?.send({
+        success: true,
+        data: data,
+        message: "Lecture found successfully",
+      });
+    } else { 
+      res?.send({
+        success: false,
+        message: "Exercise Response not found",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res?.send({
+      success: false,
+      error: error.message,
+    });  
+  }
+});
+
+
 module.exports = router;
