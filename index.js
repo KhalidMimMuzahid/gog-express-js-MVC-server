@@ -82,7 +82,7 @@ app.use("/api/v1/programs", programsRoutes);
 // ends of programs related api
 
 app.get("/", async (req, res) => {
-  res.send(`Geeks of Gurukul Server is running at port : ${PORT}`);
+  res.send(`Geeks of Gurukul Server is running at port : ${port}`);
 });
 
 app.all("*", async (req, res) => {
