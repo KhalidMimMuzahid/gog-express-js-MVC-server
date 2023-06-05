@@ -281,8 +281,14 @@ router.get("/search-exercise-response", async (req, res) => {
         "assignment.assignment_id": queryTemp?.assignment_id,
       };
     }
+    if (queryTemp?.exercise_id) {
+      query = {
+        ...query,
+        "exercise.exercise_id": queryTemp?.exercise_id,
+      };
+    }
    
-    console.log("query12", query);
+    // console.log("query12", query);
     const data = await exerciseResponse.find(query).toArray();
     // console.log("firstX", data);
     if (data?.length > 0) {
@@ -293,7 +299,8 @@ router.get("/search-exercise-response", async (req, res) => {
       });
     } else { 
       res?.send({
-        success: false,
+        success: true,
+        data: [],
         message: "Exercise Response not found",
       });
     }
@@ -305,6 +312,48 @@ router.get("/search-exercise-response", async (req, res) => {
     });  
   }
 });
+
+// exercise update
+router.put("/exercise-response-update/:id", async (req, res) => {
+  try {
+    const client = db.getClient(); // Use the existing database client
+    const exerciseResponse = client.db("examsReponse").collection("exerciseResponse");
+      const id =  req.params.id;
+      const {mark} = req.body;  
+      const query = {_id: new ObjectId(id)}; 
+    const options = { upsert: true };
+    const updateDoc = {
+      $set: {
+        mark: mark,
+      },
+    };
+    // Check if the data already exists
+    const updatedDataResponse = await exerciseResponse.updateOne(
+      query,
+      updateDoc,
+      options
+    );
+    console.log(updatedDataResponse)
+    if (updatedDataResponse?.modifiedCount) {
+      res.send({
+        success: true,
+        message: "exercise submitted successfully",
+      });
+    } else {
+      res.send({
+        success: false,
+        message: "something went wrong,\nplease try again later.",
+      });
+    }
+  } catch (err) {
+    res.send({
+      success: false,
+      message: "server internal error",
+    });
+  }
+});
+
+
 
 
 module.exports = router;
