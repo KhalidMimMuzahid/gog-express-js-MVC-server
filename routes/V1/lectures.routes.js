@@ -59,7 +59,7 @@ router.get("/search-lecture", async (req, res) => {
       .db("courseDatabase")
       .collection("LectureDetails");
     const queers = JSON.parse(req?.headers?.data);
-    console.log(queers);
+    console.log("search lecture queries: ", queers);
     const queryObj = queers ? { ...queers } : {};
     const queryTemp = {};
     let query = {};
@@ -90,7 +90,7 @@ router.get("/search-lecture", async (req, res) => {
     if (queryTemp?.module_id) {
       query = {
         ...query,
-        "module.module": queryTemp?.module_id,
+        "module.module_id": queryTemp?.module_id,
       };
     }
     if (queryTemp?.lectureName) {
@@ -105,7 +105,7 @@ router.get("/search-lecture", async (req, res) => {
         "actionsDetails.creation.creatorEmail": queryTemp?.creatorEmail,
       };
     }
-    // console.log("query", query);
+    console.log("query", query);
     const data = await LectureDetails.find(query).toArray();
     console.log("firstX", data);
     if (data?.length > 0) {
