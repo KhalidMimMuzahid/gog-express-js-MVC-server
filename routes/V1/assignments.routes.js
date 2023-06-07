@@ -41,8 +41,8 @@ router.get("/assignmentby_id", async (req, res) => {
   try {
     const client = db.getClient(); // Use the existing database client
     const assignmentDetails = client
-  .db("courseDatabase")
-  .collection("assignmentDetails");
+      .db("courseDatabase")
+      .collection("assignmentDetails");
     const _id = req?.query?._id;
     const query = { _id: new ObjectId(_id) };
     const assignment = await assignmentDetails.findOne(query);
@@ -95,7 +95,9 @@ router.get("/searchAssignment", async (req, res) => {
 router.post("/assignment-response", async (req, res) => {
   try {
     const client = db.getClient(); // Use the existing database client
-    const assignmentResponse = client.db("examsReponse").collection("assignmentResponse");
+    const assignmentResponse = client
+      .db("examsReponse")
+      .collection("assignmentResponse");
     const assignmentData = req.body;
     const query = {
       "lecture.lecture_id": assignmentData?.lecture?.lecture_id,
@@ -140,7 +142,9 @@ router.post("/assignment-response", async (req, res) => {
 router.get("/assignment-response", async (req, res) => {
   try {
     const client = db.getClient(); // Use the existing database client
-    const assignmentResponse = client.db("examsReponse").collection("assignmentResponse");
+    const assignmentResponse = client
+      .db("examsReponse")
+      .collection("assignmentResponse");
     const queryString = req?.headers?.query;
     const queryTemp = JSON.parse(queryString);
     // console.log(query);
@@ -173,13 +177,12 @@ router.get("/assignment-response", async (req, res) => {
     });
   }
 });
-//replaced one
-//for getting exercise response
-//asssignment
 router.get("/assignment-exercises-response", async (req, res) => {
   try {
     const client = db.getClient(); // Use the existing database client
-    const exerciseResponse = client.db("examsReponse").collection("exerciseResponse");
+    const exerciseResponse = client
+      .db("examsReponse")
+      .collection("exerciseResponse");
     const queryString = req?.headers?.query;
     const queryTemp = JSON.parse(queryString);
     // console.log(query);
@@ -191,8 +194,13 @@ router.get("/assignment-exercises-response", async (req, res) => {
     };
     // console.log(query);
     const exercises = await exerciseResponse.find(query).toArray();
+<<<<<<< HEAD
+    console.log(" query: ", query);
+    console.log(" existingData: ", exercises);
+=======
     // console.log(" query: ", query);
     // console.log(" existingData: ", exercises);
+>>>>>>> 8b0de86795f4602be5baa584b86aa8d9cf265363
     if (exercises?.length > 0) {
       res.send({
         success: true,

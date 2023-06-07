@@ -224,8 +224,7 @@ router.put("/exercise-response", async (req, res) => {
   }
 });
 
-
-// exercise response search   
+// exercise response search
 
 router.get("/search-exercise-response", async (req, res) => {
   try {
@@ -237,7 +236,7 @@ router.get("/search-exercise-response", async (req, res) => {
     console.log(queers);
     const queryObj = queers ? { ...queers } : {};
     const queryTemp = {};
-    let query = {status: "completed"};
+    let query = { status: "completed" };
     const dataKeys = Object.keys(queryObj);
     dataKeys.forEach((key) => {
       if (queryObj[key]) {
@@ -287,7 +286,7 @@ router.get("/search-exercise-response", async (req, res) => {
         "exercise.exercise_id": queryTemp?.exercise_id,
       };
     }
-   
+
     // console.log("query12", query);
     const data = await exerciseResponse.find(query).toArray();
     // console.log("firstX", data);
@@ -297,7 +296,7 @@ router.get("/search-exercise-response", async (req, res) => {
         data: data,
         message: "Lecture found successfully",
       });
-    } else { 
+    } else {
       res?.send({
         success: true,
         data: [],
@@ -309,7 +308,7 @@ router.get("/search-exercise-response", async (req, res) => {
     res?.send({
       success: false,
       error: error.message,
-    });  
+    });
   }
 });
 
@@ -317,10 +316,12 @@ router.get("/search-exercise-response", async (req, res) => {
 router.put("/exercise-response-update/:id", async (req, res) => {
   try {
     const client = db.getClient(); // Use the existing database client
-    const exerciseResponse = client.db("examsReponse").collection("exerciseResponse");
-      const id =  req.params.id;
-      const {mark} = req.body;  
-      const query = {_id: new ObjectId(id)}; 
+    const exerciseResponse = client
+      .db("examsReponse")
+      .collection("exerciseResponse");
+    const id = req.params.id;
+    const { mark } = req.body;
+    const query = { _id: new ObjectId(id) };
     const options = { upsert: true };
     const updateDoc = {
       $set: {
@@ -333,7 +334,7 @@ router.put("/exercise-response-update/:id", async (req, res) => {
       updateDoc,
       options
     );
-    console.log(updatedDataResponse)
+    console.log(updatedDataResponse);
     if (updatedDataResponse?.modifiedCount) {
       res.send({
         success: true,
@@ -352,8 +353,5 @@ router.put("/exercise-response-update/:id", async (req, res) => {
     });
   }
 });
-
-
-
 
 module.exports = router;
