@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const programsRoutes = require("./routes/V1/programs.routes");

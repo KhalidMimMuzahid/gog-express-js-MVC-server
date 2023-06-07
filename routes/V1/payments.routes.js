@@ -1,4 +1,5 @@
 // all imports here...
+
 const express = require("express");
 const stripe = require("stripe")(process.env.STRIPE_SK);
 const moment = require("moment");
@@ -26,6 +27,7 @@ router.post("/create-payment-intent", async (req, res) => {
       clientSecret: paymentIntent.client_secret,
     });
   } catch (error) {
+    console.log("errr", error);
     res.send({
       success: false,
       error: error.message,
