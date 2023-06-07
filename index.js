@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const programsRoutes = require("./routes/V1/programs.routes");
@@ -82,7 +83,7 @@ app.use("/api/v1/programs", programsRoutes);
 // ends of programs related api
 
 app.get("/", async (req, res) => {
-  res.send(`Geeks of Gurukul Server is running at port : ${PORT}`);
+  res.send(`Geeks of Gurukul Server is running at port : ${port}`);
 });
 
 app.all("*", async (req, res) => {
@@ -92,3 +93,4 @@ app.all("*", async (req, res) => {
 app.listen(port, () =>
   console.log(`Geeks of Gurukul Server running on ${port}`)
 );
+ 

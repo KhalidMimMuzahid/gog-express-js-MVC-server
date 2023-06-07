@@ -223,42 +223,135 @@ router.put("/exercise-response", async (req, res) => {
     });
   }
 });
-router.get("/exercises-response", async (req, res) => {
+
+// exercise response search
+
+router.get("/search-exercise-response", async (req, res) => {
   try {
     const client = db.getClient(); // Use the existing database client
     const exerciseResponse = client
       .db("examsReponse")
       .collection("exerciseResponse");
-    const queryString = req?.headers?.query;
-    const queryTemp = JSON.parse(queryString);
-    // console.log(query);
-    // return res.send({message:'ok'})
-    const query = {
-      "lecture.lecture_id": queryTemp?.lecture_id,
-      "assignment.assignment_id": queryTemp?.assignment_id,
-      "submissionDetails.studentEmail": queryTemp?.studentEmail,
+    const queers = JSON.parse(req?.headers?.data);
+    console.log(queers);
+    const queryObj = queers ? { ...queers } : {};
+    const queryTemp = {};
+    let query = { status: "completed" };
+    const dataKeys = Object.keys(queryObj);
+    dataKeys.forEach((key) => {
+      if (queryObj[key]) {
+        queryTemp[key] = queryObj[key];
+      }
+    });
+    // console.log(queryTemp);
+    if (queryTemp?.program_id) {
+      query = {
+        ...query,
+        "program.program_id": queryTemp?.program_id,
+      };
+    }
+    if (queryTemp?.course_id) {
+      query = {
+        ...query,
+        "course.course_id": queryTemp?.course_id,
+      };
+    }
+    if (queryTemp?.batch_id) {
+      query = {
+        ...query,
+        "batch.batch_id": queryTemp?.batch_id,
+      };
+    }
+    if (queryTemp?.module_id) {
+      query = {
+        ...query,
+        "module.module_id": queryTemp?.module_id,
+      };
+    }
+    if (queryTemp?.lecture_id) {
+      query = {
+        ...query,
+        "lecture.lecture_id": queryTemp?.lecture_id,
+      };
+    }
+    if (queryTemp?.assignment_id) {
+      query = {
+        ...query,
+        "assignment.assignment_id": queryTemp?.assignment_id,
+      };
+    }
+    if (queryTemp?.exercise_id) {
+      query = {
+        ...query,
+        "exercise.exercise_id": queryTemp?.exercise_id,
+      };
+    }
+
+    // console.log("query12", query);
+    const data = await exerciseResponse.find(query).toArray();
+    // console.log("firstX", data);
+    if (data?.length > 0) {
+      res?.send({
+        success: true,
+        data: data,
+        message: "Lecture found successfully",
+      });
+    } else {
+      res?.send({
+        success: true,
+        data: [],
+        message: "Exercise Response not found",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res?.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// exercise update
+router.put("/exercise-response-update/:id", async (req, res) => {
+  try {
+    const client = db.getClient(); // Use the existing database client
+    const exerciseResponse = client
+      .db("examsReponse")
+      .collection("exerciseResponse");
+    const id = req.params.id;
+    const { mark } = req.body;
+    const query = { _id: new ObjectId(id) };
+    const options = { upsert: true };
+    const updateDoc = {
+      $set: {
+        mark: mark,
+      },
     };
-    // console.log(query);
-    const exercises = await exerciseResponse.find(query).toArray();
-    console.log(" query: ", query);
-    console.log(" existingData: ", exercises);
-    if (exercises?.length > 0) {
+    // Check if the data already exists
+    const updatedDataResponse = await exerciseResponse.updateOne(
+      query,
+      updateDoc,
+      options
+    );
+    console.log(updatedDataResponse);
+    if (updatedDataResponse?.modifiedCount) {
       res.send({
         success: true,
-        message: "Assignment exercises state retrieved successfully!",
-        data: exercises,
+        message: "exercise submitted successfully",
       });
     } else {
       res.send({
         success: false,
-        message: "Assignment state not found!",
+        message: "something went wrong,\nplease try again later.",
       });
     }
   } catch (err) {
     res.send({
       success: false,
-      message: "Server internal error",
+      message: "server internal error",
     });
   }
 });
+
 module.exports = router;
