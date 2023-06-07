@@ -1,8 +1,7 @@
 // all imports here...
 const express = require("express");
-const db = require("../../utils/dbConnect")
+const db = require("../../utils/dbConnect");
 const { ObjectId } = require("mongodb");
-
 
 //initialize express router
 const router = express.Router();
@@ -10,7 +9,9 @@ const router = express.Router();
 router.post("/add-assesment", async (req, res) => {
   try {
     const client = db.getClient(); // Use the existing database client
-    const assesmentData = client.db("questionsBank").collection("assesmentData");
+    const assesmentData = client
+      .db("questionsBank")
+      .collection("assesmentData");
     const assesment = req.body;
     const result = await assesmentData.insertOne(assesment);
     // //console.log("result: ", result);
@@ -26,7 +27,9 @@ router.post("/add-assesment", async (req, res) => {
 router.get("/search-assessment", async (req, res) => {
   try {
     const client = db.getClient(); // Use the existing database client
-    const assesmentData = client.db("questionsBank").collection("assesmentData");
+    const assesmentData = client
+      .db("questionsBank")
+      .collection("assesmentData");
     const queers = JSON.parse(req?.headers?.data);
     //console.log(queers);
     const queryObj = queers ? { ...queers } : {};
@@ -95,7 +98,9 @@ router.get("/search-assessment", async (req, res) => {
 router.get("/assessments", async (req, res) => {
   try {
     const client = db.getClient(); // Use the existing database client
-    const assesmentData = client.db("questionsBank").collection("assesmentData");
+    const assesmentData = client
+      .db("questionsBank")
+      .collection("assesmentData");
     const result = await assesmentData.find().toArray();
     res.send(result);
   } catch (error) {
@@ -108,7 +113,9 @@ router.get("/assessments", async (req, res) => {
 router.get("/assessment", async (req, res) => {
   try {
     const client = db.getClient(); // Use the existing database client
-    const assesmentData = client.db("questionsBank").collection("assesmentData");
+    const assesmentData = client
+      .db("questionsBank")
+      .collection("assesmentData");
     const _id = req?.query?._id;
     ////console.log("_id: ", _id);
     const query = { _id: new ObjectId(_id) };
@@ -125,7 +132,9 @@ router.get("/assessment", async (req, res) => {
 router.get("/assessmentlabel", async (req, res) => {
   try {
     const client = db.getClient(); // Use the existing database client
-    const assesmentData = client.db("questionsBank").collection("assesmentData");
+    const assesmentData = client
+      .db("questionsBank")
+      .collection("assesmentData");
     const _id = req?.query?._id;
     ////console.log("_id: ", _id);
     const query = { _id: new ObjectId(_id) };
@@ -150,7 +159,9 @@ router.get("/assessmentlabel", async (req, res) => {
 router.post("/assessment-response", async (req, res) => {
   try {
     const client = db.getClient(); // Use the existing database client
-    const assesmentResponseData = client.db("examsReponse").collection("assesmentResponseData");
+    const assesmentResponseData = client
+      .db("examsReponse")
+      .collection("assesmentResponseData");
     const response = req.body;
     // //console.log("response: ", response);
     const result = await assesmentResponseData.insertOne(response);
@@ -166,7 +177,9 @@ router.post("/assessment-response", async (req, res) => {
 router.get("/assessment-response", async (req, res) => {
   try {
     const client = db.getClient(); // Use the existing database client
-    const assesmentResponseData = client.db("examsReponse").collection("assesmentResponseData");
+    const assesmentResponseData = client
+      .db("examsReponse")
+      .collection("assesmentResponseData");
     const _id = req?.query?._id;
     ////console.log("_id: ", _id);
     const query = { _id: new ObjectId(_id) };
@@ -183,7 +196,9 @@ router.get("/assessment-response", async (req, res) => {
 router.get("/assessment-responses", async (req, res) => {
   try {
     const client = db.getClient(); // Use the existing database client
-    const assesmentResponseData = client.db("examsReponse").collection("assesmentResponseData");
+    const assesmentResponseData = client
+      .db("examsReponse")
+      .collection("assesmentResponseData");
     const email = req?.query?.email;
     ////console.log("email: ", email);
     const query = { studentEmail: email };
@@ -211,44 +226,5 @@ router.get("/assessment-responses", async (req, res) => {
     });
   }
 });
-router.get("/assignment-exercises-response", async (req, res) => {
-  try {
-    const client = db.getClient(); // Use the existing database client
-    const exerciseResponse = client.db("examsReponse").collection("exerciseResponse");
-    const queryString = req?.headers?.query;
-    const queryTemp = JSON.parse(queryString);
-    // console.log(query);
-    // return res.send({message:'ok'})
-    const query = {
-      "lecture.lecture_id": queryTemp?.lecture_id,
-      "assignment.assignment_id": queryTemp?.assignment_id,
-      "submissionDetails.studentEmail": queryTemp?.studentEmail,
-    };
-    // console.log(query);
-    const exercises = await exerciseResponse.find(query).toArray();
-    console.log(" query: ", query);
-    console.log(" existingData: ", exercises);
-    if (exercises?.length > 0) {
-      res.send({
-        success: true,
-        message: "Assignment exercises state retrieved successfully!",
-        data: exercises,
-      });
-    } else {
-      res.send({
-        success: false,
-        message: "Assignment state not found!",
-      });
-    }
-  } catch (err) {
-    res.send({
-      success: false,
-      message: "Server internal error",
-    });
-  }
-});
-
-
-
 
 module.exports = router;
