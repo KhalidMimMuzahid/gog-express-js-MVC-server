@@ -194,13 +194,8 @@ router.get("/assignment-exercises-response", async (req, res) => {
     };
     // console.log(query);
     const exercises = await exerciseResponse.find(query).toArray();
-<<<<<<< HEAD
-    console.log(" query: ", query);
-    console.log(" existingData: ", exercises);
-=======
     // console.log(" query: ", query);
     // console.log(" existingData: ", exercises);
->>>>>>> 8b0de86795f4602be5baa584b86aa8d9cf265363
     if (exercises?.length > 0) {
       res.send({
         success: true,
