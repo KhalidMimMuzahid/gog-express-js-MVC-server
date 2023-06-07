@@ -23,7 +23,7 @@ router.post("/add-assesment", async (req, res) => {
   }
 });
 //all assessment and search
-router.get("/search-assessment", async (req, res) => {
+router.get("/search-assessment", async (req, res) => { 
   try {
     const client = db.getClient(); // Use the existing database client
     const assesmentData = client.db("questionsBank").collection("assesmentData");
