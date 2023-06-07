@@ -226,4 +226,79 @@ router.get("/assessment-responses", async (req, res) => {
     });
   }
 });
+
+// search assessment responses search
+
+router.get("/assessment-responses-search", async (req, res) => {
+  try {
+    const client = db.getClient(); // Use the existing database client
+        const assesmentData = client.db("questionsBank").collection("assesmentData"); 
+        const assesmentResponseData = client.db("examsReponse").collection("assesmentResponseData");
+
+    const email = req?.query?.email;
+    const queryObj = JSON.parse(req?.headers?.data);
+    var assessmentResponseResult = [];
+
+    const queryTemp = {};
+    let query = {};
+    const dataKeys = Object.keys(queryObj);
+    dataKeys.forEach((key) => {
+      if (queryObj[key]) {
+        queryTemp[key] = queryObj[key];
+      }
+    });
+
+    if (queryTemp?.assessmentName) {
+      query = {
+        assessmentName: queryTemp?.assessmentName,
+      };
+    }
+    if (queryTemp?.categoryName) {
+      query = {
+        ...query,
+        categoryName: queryTemp?.categoryName,
+      };
+    }
+
+    const assessments = await assesmentData.find(query).toArray();
+    // console.log(assessments)
+
+    if (assessments?.length > 0) {
+      // Create an array to store the promises returned by the map function
+      const promises = assessments.map(async (assessment) => {
+        const assessmentResponseQuery = {
+          assessmentId: assessment?._id?.toString(),
+          studentEmail: email, // "cto@geeksofgurukul.com"
+        };
+
+        const result = await assesmentResponseData.find(assessmentResponseQuery).toArray();
+        return result;
+      });
+
+      // Use Promise.all to wait for all promises to resolve
+      const assessmentResponseResults = await Promise.all(promises);
+
+      // Flatten the array of arrays into a single array
+      assessmentResponseResult = assessmentResponseResults.flat();
+
+      // console.log("result", assessmentResponseResult.length);
+      res?.send({
+        success: true,
+        data: assessmentResponseResult, // Send the assessment response data
+        message: "Assessment found successfully",
+      });
+    } else {
+      res?.send({
+        success: false,
+        message: "Don't have any data!",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res?.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
 module.exports = router;
