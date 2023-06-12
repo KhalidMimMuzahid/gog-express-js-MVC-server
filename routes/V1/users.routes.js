@@ -30,7 +30,7 @@ router.get("/search-user", async (req, res) => {
       res?.send({
         success: true,
         data: data,
-        message: "Lecture found successfully",
+        message: "user found successfully",
       });
     } else {
       res?.send({

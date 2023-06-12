@@ -71,65 +71,100 @@ router.post("/enroll-course", async (req, res) => {
 router.post("/add-student-to-course", async (req, res) => {
   try {
     const client = db.getClient(); // Use the existing database client
+    const userBasicCollection = client
+      .db("users")
+      .collection("userBasicCollection");
     const coursePurchaseDetails = client
       .db("courseDatabase")
       .collection("coursePurchaseDetails");
-    const coursePurchaseDetailsInfo = req.body;
-    ////console.log("coursePurchaseDetails: ", coursePurchaseDetails);
-
-    const query = {
-      "program.program_id": coursePurchaseDetailsInfo?.program?.program_id,
-      "course.course_id": coursePurchaseDetailsInfo?.course?.course_id,
-      "batch.batch_id": coursePurchaseDetailsInfo?.batch?.batch_id,
-      "purchaseInfo.purchaseByEmail":
-        coursePurchaseDetailsInfo?.purchaseInfo?.purchaseByEmail,
+    const coursePurchaseDetailsInfoTemp = req.body;
+    // console.log("coursePurchaseDetailsInfo: ", coursePurchaseDetailsInfoTemp);
+    //console.log(email);
+    const queryForUser = {
+      email: coursePurchaseDetailsInfoTemp?.purchaseInfo?.purchaseByEmail,
     };
-    const result = await coursePurchaseDetails.findOne(query);
-    ////console.log("result: ", result);
-    //res.send(result);
-    if (result?._id) {
-      // This course is already enrolled
-      if (result?.isPaid) {
-        // This course is already purchased
-        // Done
-        res.send({
-          success: false,
-          error: `you have already purchased this course in this batch ${coursePurchaseDetailsInfo?.batch?.batchName}`,
-        });
+
+    //console.log(query);
+    const user = await userBasicCollection.findOne(queryForUser);
+    console.log("user: ", user);
+    if (user?._id) {
+      const coursePurchaseDetailsInfo = {
+        ...coursePurchaseDetailsInfoTemp,
+      };
+      coursePurchaseDetailsInfo.purchaseInfo.purchaseByName = user?.name;
+      const query = {
+        "program.program_id": coursePurchaseDetailsInfo?.program?.program_id,
+        "course.course_id": coursePurchaseDetailsInfo?.course?.course_id,
+        "batch.batch_id": coursePurchaseDetailsInfo?.batch?.batch_id,
+        "purchaseInfo.purchaseByEmail":
+          coursePurchaseDetailsInfo?.purchaseInfo?.purchaseByEmail,
+      };
+      const result = await coursePurchaseDetails.findOne(query);
+      ////console.log("result: ", result);
+      //res.send(result);
+      if (result?._id) {
+        // This course is already enrolled
+        if (result?.isPaid) {
+          // This course is already purchased
+          // Done
+          res.send({
+            success: false,
+            error: `you have already purchased this course in this batch ${coursePurchaseDetailsInfo?.batch?.batchName}`,
+          });
+        } else {
+          // This course is enrolled but not paid yet
+          // Now we need to update the document and we need to set the value isPaid, addedBy, discount, appliedPrice ,couponCode,paymentId
+          const {
+            isPaid,
+            addedBy,
+            discount,
+            appliedPrice,
+            couponCode,
+            paymentId,
+          } = coursePurchaseDetailsInfo;
+          const updateInfo = {
+            isPaid,
+            addedBy,
+            discount,
+            appliedPrice,
+            couponCode,
+            paymentId,
+            "purchaseInfo.paidAt":
+              coursePurchaseDetailsInfo?.purchaseInfo?.paidAt,
+          };
+          console.log("coursePurchaseDetailsInfo: ", coursePurchaseDetailsInfo);
+          const options = { upsert: true };
+          const updateDoc = {
+            $set: {
+              ...updateInfo,
+            },
+          };
+          const result3 = await coursePurchaseDetails.updateOne(
+            query,
+            updateDoc,
+            options
+          );
+          if (result3?.modifiedCount) {
+            res.send({
+              success: true,
+              message: "Student successfully added in this course",
+            });
+          } else {
+            res.send({
+              success: false,
+              error: "Server internal error",
+            });
+          }
+        }
       } else {
-        // This course is enrolled but not paid yet
-        // Now we need to update the document and we need to set the value isPaid, addedBy, discount, appliedPrice ,couponCode,paymentId
-        const {
-          isPaid,
-          addedBy,
-          discount,
-          appliedPrice,
-          couponCode,
-          paymentId,
-        } = coursePurchaseDetailsInfo;
-        const updateInfo = {
-          isPaid,
-          addedBy,
-          discount,
-          appliedPrice,
-          couponCode,
-          paymentId,
-          "purchaseInfo.paidAt":
-            coursePurchaseDetailsInfo?.purchaseInfo?.paidAt,
-        };
-        console.log("coursePurchaseDetailsInfo: ", coursePurchaseDetailsInfo);
-        const options = { upsert: true };
-        const updateDoc = {
-          $set: {
-            ...updateInfo,
-          },
-        };
-        const result3 = await coursePurchaseDetails.updateOne(
-          query,
-          updateDoc,
-          options
+        // This course is not enrolled
+        // Doneeeee
+        const result2 = await coursePurchaseDetails.insertOne(
+          coursePurchaseDetailsInfo
         );
-        if (result3?.modifiedCount) {
+        // We need to check result2.insertedId is here that means it's successfully purchased
+        // otherwise it will be for server internal error
+        if (result2) {
           res.send({
             success: true,
             message: "Student successfully added in this course",
@@ -137,29 +172,15 @@ router.post("/add-student-to-course", async (req, res) => {
         } else {
           res.send({
             success: false,
-            error: "Server internal error",
+            error: "Sever internal error",
           });
         }
       }
     } else {
-      // This course is not enrolled
-      // Doneeeee
-      const result2 = await coursePurchaseDetails.insertOne(
-        coursePurchaseDetailsInfo
-      );
-      // We need to check result2.insertedId is here that means it's successfully purchased
-      // otherwise it will be for server internal error
-      if (result2) {
-        res.send({
-          success: true,
-          message: "Student successfully added in this course",
-        });
-      } else {
-        res.send({
-          success: false,
-          error: "Sever internal error",
-        });
-      }
+      res.send({
+        success: false,
+        error: "student does not exist with this email",
+      });
     }
   } catch (error) {
     res.send({
@@ -168,7 +189,6 @@ router.post("/add-student-to-course", async (req, res) => {
     });
   }
 });
-// New API addStudent to courses
 
 router.get("/enroll-course-info", async (req, res) => {
   try {
