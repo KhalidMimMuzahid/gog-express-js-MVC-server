@@ -207,6 +207,37 @@ router.get("/enroll-course-info", async (req, res) => {
     });
   }
 });
+router.get("/my-courses", async (req, res) => {
+  try {
+    const client = db.getClient(); // Use the existing database client
+    const coursePurchaseDetails = client
+      .db("courseDatabase")
+      .collection("coursePurchaseDetails");
+    const email = req?.query?.email;
+    console.log("email: ", email);
+
+    const query = {
+      "purchaseInfo.purchaseByEmail": email,
+    };
+    const result = await coursePurchaseDetails.find(query).toArray();
+    if (result?.length > 0) {
+      res.send({
+        success: true,
+        data: result,
+      });
+    } else {
+      res.send({
+        success: false,
+        error: "You haven't purchased any course",
+      });
+    }
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
 
 //api
 
