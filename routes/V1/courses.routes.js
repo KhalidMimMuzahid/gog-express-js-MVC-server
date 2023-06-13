@@ -192,6 +192,30 @@ router.get("/course/:id", async (req, res) => {
   }
 });
 
+// new api get course
+router.get("/course/:id", async (req, res) => {
+  try {
+    const client = db.getClient(); // Use the existing database client
+    const courseDetails = client
+      .db("courseDatabase")
+      .collection("courseDetails");
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) };
+    const course = await courseDetails.findOne(query);
+    res.send({
+      success: true,
+      data: course,
+      message: "Successfully get data",
+    });
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+// new api
+
 //api
 
 module.exports = router;
