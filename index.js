@@ -5,6 +5,7 @@ const programsRoutes = require("./routes/V1/programs.routes");
 const userRoutes = require("./routes/V1/users.routes");
 const assessmentRoutes = require("./routes/V1/assessments.routes");
 const assignmentsRoutes = require("./routes/V1/assignments.routes");
+const evaluationsRoutes = require("./routes/V1/evaluation.routes");
 const batchesRoutes = require("./routes/V1/batches.routes");
 const couponRoutes = require("./routes/V1/coupons.routes");
 const coursesRoutes = require("./routes/V1/courses.routes");
@@ -27,16 +28,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-
 // Connect to the database
 db.connect()
-  .then(() => {
-    
-  })
+  .then(() => {})
   .catch((error) => {
     console.error("Error connecting to the database:", error);
   });
-
 
 //assessment related api
 app.use("/api/v1/assessments", assessmentRoutes);
@@ -44,6 +41,9 @@ app.use("/api/v1/assessments", assessmentRoutes);
 //Assignments related API
 app.use("/api/v1/assignments", assignmentsRoutes);
 //Assignments related API
+//Evaluations related API
+app.use("/api/v1/evaluations", evaluationsRoutes);
+//Evaluations related API
 //Batches related API
 app.use("/api/v1/batches", batchesRoutes);
 //Batches related API
@@ -87,10 +87,9 @@ app.get("/", async (req, res) => {
 });
 
 app.all("*", async (req, res) => {
-  res.send({message:"Route Not Exists!"});
+  res.send({ message: "Route Not Exists!" });
 });
 
 app.listen(port, () =>
   console.log(`Geeks of Gurukul Server running on ${port}`)
 );
- 
