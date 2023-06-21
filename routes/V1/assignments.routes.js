@@ -36,7 +36,7 @@ router.post("/assignmentDetails", async (req, res) => {
     });
   }
 });
-//getting assignment by id.
+//getting exercise by assignment_id.
 router.get("/assignmentby_id", async (req, res) => {
   try {
     const client = db.getClient(); // Use the existing database client

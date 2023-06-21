@@ -140,7 +140,53 @@ router.post("/exercise-response", async (req, res) => {
     });
   }
 });
+// Api for storing exercise state of each student
+router.post("/exercise-response-for-evaluation", async (req, res) => {
+  try {
+    const client = db.getClient(); // Use the existing database client
+    const exerciseResponse = client
+      .db("examsReponse")
+      .collection("exerciseResponse");
+    const exerciseData = req.body;
+    const query = {
+      "evaluation.evaluation_id": exerciseData?.evaluation?.evaluation_id,
+      "exercise.exercise_id": exerciseData?.exercise.exercise_id,
+      "submissionDetails.studentEmail":
+        exerciseData?.submissionDetails.studentEmail,
+    };
+    // Check if the data already exists
 
+    const existingData = await exerciseResponse.findOne(query);
+    // console.log(" query: ", query);
+    // console.log(" existingData: ", existingData);
+    if (!existingData) {
+      // Save the data to the collection
+      result = await exerciseResponse.insertOne(exerciseData);
+      if (result) {
+        res.send({
+          success: true,
+          message: "Data saved successfully!",
+        });
+      } else {
+        // to
+        res.send({
+          success: false,
+          message: "Data haven't saved successfully!",
+        });
+      }
+    } else {
+      res.send({
+        success: true,
+        message: "You have already started this exercise!",
+      });
+    }
+  } catch (err) {
+    res.send({
+      success: false,
+      message: "server internal error",
+    });
+  }
+});
 // Retrieve exercise state of a student
 router.get("/exercise-response", async (req, res) => {
   try {
@@ -185,7 +231,49 @@ router.get("/exercise-response", async (req, res) => {
     });
   }
 });
+// Retrieve exercise state for rvaluation of a student
+router.get("/exercise-response-for-evaluation", async (req, res) => {
+  try {
+    const client = db.getClient(); // Use the existing database client
+    const exerciseResponse = client
+      .db("examsReponse")
+      .collection("exerciseResponse");
+    const queryString = req?.headers?.query;
+    const queryTemp = JSON.parse(queryString);
+    // console.log(query);
+    // return res.send({message:'ok'})
 
+    const query = {
+      "evaluation.evaluation_id": queryTemp?.evaluation_id,
+      "exercise.exercise_id": queryTemp?.exercise_id,
+      "submissionDetails.studentEmail": queryTemp?.studentEmail,
+    };
+
+    // console.log(query);
+
+    const existingData = await exerciseResponse.findOne(query);
+    console.log(" query: ", query);
+    console.log(" existingData: ", existingData);
+
+    if (existingData) {
+      res.send({
+        success: true,
+        message: "Exercise state retrieved successfully!",
+        data: existingData,
+      });
+    } else {
+      res.send({
+        success: false,
+        message: "Exercise state not found!",
+      });
+    }
+  } catch (err) {
+    res.send({
+      success: false,
+      message: "Server internal error",
+    });
+  }
+});
 // for updating exercise response
 router.put("/exercise-response", async (req, res) => {
   try {
@@ -233,7 +321,7 @@ router.get("/search-exercise-response", async (req, res) => {
       .db("examsReponse")
       .collection("exerciseResponse");
     const queers = JSON.parse(req?.headers?.data);
-    console.log(queers);
+    // console.log(queers);
     const queryObj = queers ? { ...queers } : {};
     const queryTemp = {};
     let query = { status: "completed" };
@@ -272,6 +360,12 @@ router.get("/search-exercise-response", async (req, res) => {
       query = {
         ...query,
         "lecture.lecture_id": queryTemp?.lecture_id,
+      };
+    }
+    if (queryTemp?.evaluation_id) {
+      query = {
+        ...query,
+        "evaluation.evaluation_id": queryTemp?.evaluation_id,
       };
     }
     if (queryTemp?.assignment_id) {
