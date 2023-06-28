@@ -2,6 +2,7 @@
 const express = require("express");
 const db = require("../../utils/dbConnect");
 const { ObjectId } = require("mongodb");
+const { sendNotify } = require("../../thirdPartyApp/socketIO/announcement");
 
 //initialize express router
 const router = express.Router();
@@ -430,6 +431,53 @@ router.put("/exercise-response-update/:id", async (req, res) => {
     );
     console.log(updatedDataResponse);
     if (updatedDataResponse?.modifiedCount) {
+      const exerciseResponseData = await exerciseResponse.findOne(query);
+      console.log("exerciseResponseData: ", exerciseResponseData);
+
+      // {
+      //   _id: new ObjectId("647b23316b1e0727e15c24d7"),
+      //   status: 'completed',
+      //   program: {
+      //     program_id: '64644907867dbeeb8c02a20d',
+      //     programName: 'Coding-Bees'
+      //   },
+      //   course: {
+      //     course_id: '6465c48a3a22da5a8518d942',
+      //     courseName: 'Full Stack Web Development'
+      //   },
+      //   batch: { batch_id: '6469c5010664f5003c9be953', batchName: 'FSWD-001' },
+      //   lecture: { lecture_id: '647ad3b7eaaecddb5f0d4504', lectureName: 'Testing' },
+      //   module: { module_id: '64783d7cb081bab87a23b996', moduleName: 'module 4' },
+      //   assignment: {
+      //     assignment_id: '646df95ce32035ce9aa7b32e',
+      //     assignmentName: 'Assignment 04'
+      //   },
+      //   exercise: {
+      //     exercise_id: '64646e6f0789ee45aedfbee4',
+      //     exerciseName: 'Exercise Name5'
+      //   },
+      //   submissionDetails: {
+      //     studentEmail: 'jayendraawasthi06@gmail.com',
+      //     startedAt: '2023-06-03T16:55:37+05:30',
+      //     finishedAt: '2023-06-03T16:55:45+05:30'
+      //   },
+      //   submittedLink: 'https://all-files-for-gog.s3.amazonaws.com/assets/any-types/icon.ico',
+      //   mark: 8
+      // }
+
+      const announcement = {
+        announcementTitle: `exercise mark uploaded for "${exerciseResponseData?.exercise?.exerciseName}"`,
+        announcementBody: `Good News! you have got ${exerciseResponseData?.mark} out of 10.\nThis exercise is inside the course "${exerciseResponseData?.course?.courseName}"\n`,
+        type: "exercise-response-mark-uploaded",
+        details: {
+          exerciseResponse_id: id,
+          exerciseResponseName: exerciseResponseData?.exercise?.exerciseName,
+        },
+      };
+      const receiverEmail = [
+        exerciseResponseData?.submissionDetails?.studentEmail,
+      ];
+      sendNotify({ announcement, receiverEmail });
       res.send({
         success: true,
         message: "exercise submitted successfully",
@@ -441,6 +489,7 @@ router.put("/exercise-response-update/:id", async (req, res) => {
       });
     }
   } catch (err) {
+    // console.log("error: ", err);
     res.send({
       success: false,
       message: "server internal error",

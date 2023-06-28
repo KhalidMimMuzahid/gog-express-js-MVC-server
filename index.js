@@ -16,14 +16,17 @@ const programsRoute = require("./routes/V1/programs.routes");
 const purchaseCourseDetailseRoute = require("./routes/V1/purchaseCourseDetailse.routes");
 const questionsRoute = require("./routes/V1/questions.routes");
 const lecturesRoute = require("./routes/V1/lectures.routes");
+const notificationsRoute = require("./routes/V1/notifications.routes");
 const db = require("./utils/dbConnect");
+// const { Server } = require("socket.io");
+const { notify } = require("./thirdPartyApp/socketIO/announcement");
 
 // const bcrypt = require('bcrypt');
 // const jwt = require('jsonwebtoken');;
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 const app = express();
-
+// import { Server } from "socket.io";
 // middleware
 app.use(cors());
 app.use(express.json());
@@ -34,6 +37,19 @@ db.connect()
   .catch((error) => {
     console.error("Error connecting to the database:", error);
   });
+const server = app.listen(port, () =>
+  console.log(`Geeks of Gurukul Server running on ${port}`)
+);
+const io = require("socket.io")(server, {
+  pingTimeout: 60000,
+  cors: {
+    origin: "http://localhost:3000",
+  },
+});
+
+io.on("connection", (socket) => {
+  notify(io, socket);
+});
 
 //assessment related api
 app.use("/api/v1/assessments", assessmentRoutes);
@@ -74,6 +90,9 @@ app.use("/api/v1/purchasesCourse", purchaseCourseDetailseRoute);
 //Questions related API
 app.use("/api/v1/questions", questionsRoute);
 //Questions related API
+//Notifications related API
+app.use("/api/v1/notifications", notificationsRoute);
+//Notifications related API
 //user related api
 app.use("/api/v1/users", userRoutes);
 //user related api
@@ -89,7 +108,3 @@ app.get("/", async (req, res) => {
 app.all("*", async (req, res) => {
   res.send({ message: "Route Not Exists!" });
 });
-
-app.listen(port, () =>
-  console.log(`Geeks of Gurukul Server running on ${port}`)
-);
