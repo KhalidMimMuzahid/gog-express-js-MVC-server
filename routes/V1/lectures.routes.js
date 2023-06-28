@@ -1,6 +1,9 @@
 // all imports here...
 const express = require("express");
-const db = require("../../utils/dbConnect")
+const db = require("../../utils/dbConnect");
+const { sendNotify } = require("../../thirdPartyApp/socketIO/announcement");
+const moment = require("moment/moment");
+const { formatDateTime } = require("../../utils/normalFunction");
 
 //initialize express router
 const router = express.Router();
@@ -12,11 +15,48 @@ router.post("/lectureDetails", async (req, res) => {
     const LectureDetails = client
       .db("courseDatabase")
       .collection("LectureDetails");
+    const coursePurchaseDetails = client
+      .db("courseDatabase")
+      .collection("coursePurchaseDetails");
     const lecture = req.body;
-    //console.log(lecture);
+    // console.log("lecture: ", lecture);
+
+    // for the testing of socket io  end
     const result = await LectureDetails.insertOne(lecture);
-    //console.log("result: ", result);
-    if (result?.acknowledged) {
+    if (result?.insertedId) {
+      const insertedIdString = result?.insertedId?.toString();
+      const announcement = {
+        announcementTitle: `lecture "${lecture?.lectureName}" has been released to course "${lecture?.course?.courseName}"`,
+        announcementBody: `This lecture is going to be live in ${moment(
+          formatDateTime(lecture?.startAt),
+          "YYYY-MM-DD HH:mm"
+        ).format(
+          "Do MMMM (dddd), YYYY, h:mm:ss a"
+        )}. So tighten your belt and get prepared to fly with us.`,
+        type: "lecture-released",
+        // triggeredAt: "21 June 2023",
+        details: {
+          lecture_id: insertedIdString,
+          lectureName: lecture?.lectureName,
+        },
+      };
+
+      const query = { "batch.batch_id": lecture?.batch?.batch_id };
+
+      // console.log("query :", query);
+      const options = {
+        projection: { _id: 0, "purchaseInfo.purchaseByEmail": 1 },
+      };
+      const receivers = await coursePurchaseDetails
+        .find(query, options)
+        .toArray();
+      const receiverEmail = receivers?.map(
+        (each) => each?.purchaseInfo.purchaseByEmail
+      );
+      //
+      // console.log("announcement: ", announcement);
+      // console.log("receiverEmail: ", receiverEmail);
+      sendNotify({ announcement, receiverEmail });
       res.send({
         success: true,
         data: result,
@@ -45,9 +85,9 @@ router.get("/lecturesbymodule", async (req, res) => {
     const _id = req?.query?._id;
     const query = { "module.module_id": _id };
     const lectures = await LectureDetails.find(query).toArray();
-    console.log(lectures) 
+    console.log(lectures);
     res.send(lectures);
-  } catch (error) { 
+  } catch (error) {
     res.send([]);
   }
 });
