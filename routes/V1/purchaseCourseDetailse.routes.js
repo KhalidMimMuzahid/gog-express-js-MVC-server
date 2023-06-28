@@ -2,6 +2,7 @@
 const express = require("express");
 const db = require("../../utils/dbConnect");
 const { ObjectId } = require("mongodb");
+const { sendNotify } = require("../../thirdPartyApp/socketIO/announcement");
 
 //initialize express router
 const router = express.Router();
@@ -101,7 +102,20 @@ router.post("/add-student-to-course", async (req, res) => {
       };
       const result = await coursePurchaseDetails.findOne(query);
       ////console.log("result: ", result);
-      //res.send(result);
+
+      const announcement = {
+        announcementTitle: `you have successfully purchased course `,
+        announcementBody: `you have purchased course "${coursePurchaseDetailsInfo?.course?.courseName} with the following batch of "${coursePurchaseDetailsInfo?.batch?.batchName}"`,
+        type: "course-purchased",
+        details: {
+          batch_id: coursePurchaseDetailsInfo?.batch?.batch_id,
+          batchName: coursePurchaseDetailsInfo?.batch?.batchName,
+        },
+      };
+      const receiverEmail = [
+        coursePurchaseDetailsInfo?.purchaseInfo?.purchaseByEmail,
+      ];
+
       if (result?._id) {
         // This course is already enrolled
         if (result?.isPaid) {
@@ -145,6 +159,7 @@ router.post("/add-student-to-course", async (req, res) => {
             options
           );
           if (result3?.modifiedCount) {
+            sendNotify({ announcement, receiverEmail });
             res.send({
               success: true,
               message: "Student successfully added in this course",
@@ -165,6 +180,7 @@ router.post("/add-student-to-course", async (req, res) => {
         // We need to check result2.insertedId is here that means it's successfully purchased
         // otherwise it will be for server internal error
         if (result2) {
+          sendNotify({ announcement, receiverEmail });
           res.send({
             success: true,
             message: "Student successfully added in this course",
